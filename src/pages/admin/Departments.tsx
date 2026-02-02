@@ -3,14 +3,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { mockDepartments } from "@/lib/mockData";
+import { useState, useEffect } from "react";
+import { departmentsAPI } from "@/services/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+interface Department {
+  id: string;
+  name: string;
+  hodName: string;
+  hodEmail: string;
+}
 
 const Departments = () => {
-  const [departments, setDepartments] = useState(mockDepartments);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -18,16 +28,66 @@ const Departments = () => {
     hodEmail: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fetch departments on mount
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
+
+  const fetchDepartments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await departmentsAPI.getAll();
+      
+      if (response.success) {
+        setDepartments(response.data);
+      } else {
+        setError(response.message || "Failed to fetch departments");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch departments");
+      console.error("Error fetching departments:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newDept = {
-      id: (departments.length + 1).toString(),
-      ...formData,
-    };
-    setDepartments([...departments, newDept]);
-    toast.success("Department added successfully");
-    setFormData({ name: "", hodName: "", hodEmail: "" });
-    setShowForm(false);
+    
+    try {
+      const response = await departmentsAPI.create(formData);
+      
+      if (response.success) {
+        toast.success("Department added successfully");
+        setFormData({ name: "", hodName: "", hodEmail: "" });
+        setShowForm(false);
+        fetchDepartments(); // Refresh list
+      } else {
+        toast.error(response.message || "Failed to add department");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add department");
+      console.error("Error creating department:", err);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this department?")) return;
+    
+    try {
+      const response = await departmentsAPI.delete(id);
+      
+      if (response.success) {
+        toast.success("Department deleted successfully");
+        fetchDepartments(); // Refresh list
+      } else {
+        toast.error(response.message || "Failed to delete department");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete department");
+      console.error("Error deleting department:", err);
+    }
   };
 
   return (
@@ -44,6 +104,17 @@ const Departments = () => {
           </Button>
         </div>
 
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Error:</strong> {error}
+              <br />
+              <span className="text-sm">Make sure backend is running on http://localhost:8000</span>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {showForm && (
           <Card>
             <CardHeader>
@@ -54,7 +125,7 @@ const Departments = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Department Name</Label>
+                    <Label htmlFor="name">Department Name *</Label>
                     <Input
                       id="name"
                       value={formData.name}
@@ -64,7 +135,7 @@ const Departments = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="hodName">HOD Name</Label>
+                    <Label htmlFor="hodName">HOD Name *</Label>
                     <Input
                       id="hodName"
                       value={formData.hodName}
@@ -74,7 +145,7 @@ const Departments = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="hodEmail">HOD Email</Label>
+                    <Label htmlFor="hodEmail">HOD Email *</Label>
                     <Input
                       id="hodEmail"
                       type="email"
@@ -98,37 +169,67 @@ const Departments = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Registered Departments</CardTitle>
-            <CardDescription>List of all departments and their HODs</CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Registered Departments</CardTitle>
+                <CardDescription>List of all departments and their HODs (Live from MongoDB)</CardDescription>
+              </div>
+              <Button onClick={fetchDepartments} variant="outline" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Refreshing...
+                  </>
+                ) : (
+                  "Refresh"
+                )}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Department Name</TableHead>
-                  <TableHead>HOD Name</TableHead>
-                  <TableHead>HOD Email</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {departments.map((dept) => (
-                  <TableRow key={dept.id}>
-                    <TableCell className="font-medium">{dept.name}</TableCell>
-                    <TableCell>{dept.hodName}</TableCell>
-                    <TableCell>{dept.hodEmail}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading departments...</span>
+              </div>
+            ) : departments.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No departments found. Add one to get started!
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Department Name</TableHead>
+                    <TableHead>HOD Name</TableHead>
+                    <TableHead>HOD Email</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {departments.map((dept) => (
+                    <TableRow key={dept.id}>
+                      <TableCell className="font-medium">{dept.name}</TableCell>
+                      <TableCell>{dept.hodName}</TableCell>
+                      <TableCell>{dept.hodEmail}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-destructive"
+                          onClick={() => handleDelete(dept.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
