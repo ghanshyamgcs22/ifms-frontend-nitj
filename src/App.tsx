@@ -10,14 +10,15 @@ import Departments from "./pages/admin/Departments";
 import RegisterPI from "./pages/admin/RegisterPI";
 import CreateProject from "./pages/pi/CreateProject";
 import Projects from "./pages/admin/Projects";
-import ReleaseFunds from "./pages/admin/ReleaseFunds";
+
 import ProjectHeads from "./pages/admin/ProjectHeads";
-import BudgetReview from "./pages/admin/BudgetReview";
+
 import PIDashboard from "./pages/pi/Dashboard";
 import BookBudget from "./pages/pi/BookBudget";
 import ARDashboard from "./pages/approvals/ARDashboard";
 import DRDashboard from "./pages/approvals/DRDashboard";
-import AO2Dashboard from "./pages/approvals/AO2Dashboard";
+import DADashboard from "./pages/approvals/DADashboard";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -84,14 +85,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/release-funds"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <ReleaseFunds />
-              </ProtectedRoute>
-            }
-          />
+         
           <Route
             path="/admin/project-heads"
             element={
@@ -100,14 +94,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/budget-review"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <BudgetReview />
-              </ProtectedRoute>
-            }
-          />
+          
           <Route
             path="/pi"
             element={
@@ -140,14 +127,14 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/ao2"
-            element={
-              <ProtectedRoute allowedRoles={["ao2"]}>
-                <AO2Dashboard />
-              </ProtectedRoute>
-            }
-          />
+         <Route
+  path="/da"
+  element={
+    <ProtectedRoute allowedRoles={["da"]}>
+      <DADashboard />
+    </ProtectedRoute>
+  }
+/>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -36,9 +36,9 @@ export const mockUsers: User[] = [
   },
   {
     id: "5",
-    name: "AO2 Officer",
-    email: "ao2@ifms.edu",
-    role: "ao2",
+    name: "DA Officer",
+    email: "da@ifms.edu",
+    role: "da",
   },
 ];
 

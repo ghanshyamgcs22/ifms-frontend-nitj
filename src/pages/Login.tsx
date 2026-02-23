@@ -17,7 +17,6 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const user = login(email, password);
       if (user) {
@@ -33,14 +32,12 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center gradient-mesh p-4 animate-gradient relative overflow-hidden">
-      {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
       <div className="w-full max-w-md relative z-10 animate-fade-in">
-        {/* Logo Section */}
         <div className="text-center mb-8 animate-slide-up">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-primary mb-4 shadow-glow hover:scale-110 transition-transform duration-300">
             <Building2 className="h-10 w-10 text-white" />
@@ -49,7 +46,6 @@ const Login = () => {
           <p className="text-muted-foreground">Institute Financial Management System</p>
         </div>
 
-        {/* Login Card with Glassmorphism */}
         <Card className="shadow-elevated backdrop-blur-sm bg-card/95 border-2 hover:shadow-glow transition-all duration-300 animate-scale-in">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
@@ -57,7 +53,6 @@ const Login = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-5">
-              {/* Email Input */}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-semibold">Email</Label>
                 <div className="relative group">
@@ -74,7 +69,6 @@ const Login = () => {
                 </div>
               </div>
 
-              {/* Password Input */}
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-semibold">Password</Label>
                 <div className="relative group">
@@ -91,7 +85,6 @@ const Login = () => {
                 </div>
               </div>
 
-              {/* Submit Button */}
               <Button
                 type="submit"
                 className="w-full h-11 font-semibold bg-gradient-primary hover:shadow-glow transition-all duration-300 hover:scale-[1.02]"
@@ -110,7 +103,7 @@ const Login = () => {
                 )}
               </Button>
 
-              {/* Demo Credentials */}
+              {/* Demo Credentials — updated to show DA / AR / DR */}
               <div className="mt-6 p-4 bg-gradient-to-br from-muted/50 to-muted rounded-xl border border-border/50 backdrop-blur-sm">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
@@ -121,7 +114,7 @@ const Login = () => {
                     <p className="font-semibold text-muted-foreground">Roles:</p>
                     <p className="text-foreground">Admin</p>
                     <p className="text-foreground">PI</p>
-                    <p className="text-foreground">AR / DR / AO2</p>
+                    <p className="text-foreground">DA / AR / DR</p>
                   </div>
                   <div className="space-y-1">
                     <p className="font-semibold text-muted-foreground">Access:</p>
@@ -131,14 +124,16 @@ const Login = () => {
                   </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-border/50">
-                  <p className="text-xs"><span className="font-semibold text-muted-foreground">Password:</span> <span className="font-mono text-foreground">password123</span></p>
+                  <p className="text-xs">
+                    <span className="font-semibold text-muted-foreground">Password:</span>{" "}
+                    <span className="font-mono text-foreground">password123</span>
+                  </p>
                 </div>
               </div>
             </form>
           </CardContent>
         </Card>
 
-        {/* Footer */}
         <p className="text-center text-sm text-muted-foreground mt-6">
           Secure financial management for educational institutions
         </p>

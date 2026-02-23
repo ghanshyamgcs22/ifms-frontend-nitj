@@ -9,9 +9,8 @@ import {
   FileText,
   TrendingUp,
   DollarSign,
-  CheckCircle,
   Clock,
-  FileCheck,
+
 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -39,13 +38,7 @@ const AdminDashboard = () => {
       description: "+12% from last quarter",
       color: "text-success",
     },
-    {
-      title: "Pending Approvals",
-      value: "7",
-      icon: Clock,
-      description: "Requires attention",
-      color: "text-warning",
-    },
+    
   ];
 
   const quickActions = [
@@ -55,24 +48,7 @@ const AdminDashboard = () => {
       icon: FolderKanban,
       path: "/admin/create-project",
     },
-    {
-      title: "Manage Departments",
-      description: "Add or edit department details and HODs",
-      icon: Building2,
-      path: "/admin/departments",
-    },
-    {
-      title: "Register PI",
-      description: "Register new Principal Investigators",
-      icon: Users,
-      path: "/admin/register-pi",
-    },
-    {
-      title: "Budget Verification",
-      description: "Verify and forward budget requests to AR",
-      icon: FileCheck,
-      path: "/admin/budget-review",
-    },
+   
     {
       title: "Manage Projects",
       description: "View and manage all projects",
@@ -80,17 +56,12 @@ const AdminDashboard = () => {
       path: "/admin/projects",
     },
     {
-      title: "Project Heads",
+      title: "Create Project Heads",
       description: "Manage recurring and non-recurring heads",
       icon: TrendingUp,
       path: "/admin/project-heads",
     },
-    {
-      title: "Release Funds",
-      description: "Release funds to sanctioned projects",
-      icon: CheckCircle,
-      path: "/admin/release-funds",
-    },
+   
   ];
 
   return (

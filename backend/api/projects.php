@@ -22,20 +22,40 @@ try {
         case 'GET':
             $search = $_GET['search'] ?? '';
             $status = $_GET['status'] ?? '';
+            $id = $_GET['id'] ?? null;
             
-            if (!empty($search) || !empty($status)) {
-                $projects = $project->search($search, $status);
+            if ($id) {
+                // Get single project with files
+                $projectData = $project->getOne($id);
+                if (!$projectData) {
+                    http_response_code(404);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Project not found'
+                    ]);
+                    exit;
+                }
+                
+                echo json_encode([
+                    'success' => true,
+                    'data' => Project::formatDocument($projectData)
+                ]);
             } else {
-                $projects = $project->getAll();
+                // Get all projects or search
+                if (!empty($search) || !empty($status)) {
+                    $projects = $project->search($search, $status);
+                } else {
+                    $projects = $project->getAll();
+                }
+                
+                $formattedProjects = array_map([Project::class, 'formatDocument'], $projects);
+                
+                echo json_encode([
+                    'success' => true,
+                    'data' => array_values($formattedProjects),
+                    'count' => count($formattedProjects)
+                ]);
             }
-            
-            $formattedProjects = array_map([Project::class, 'formatDocument'], $projects);
-            
-            echo json_encode([
-                'success' => true,
-                'data' => array_values($formattedProjects),
-                'count' => count($formattedProjects)
-            ]);
             break;
 
         case 'POST':
@@ -52,13 +72,30 @@ try {
                 throw new Exception('No data received');
             }
             
-            $requiredFields = ['title', 'piName', 'piEmail', 'department', 'duration', 'proposedBudget'];
+            // Validate required fields
+            $requiredFields = ['projectName', 'piName', 'department'];
             foreach ($requiredFields as $field) {
                 if (empty($data[$field])) {
                     throw new Exception("Missing required field: $field");
                 }
             }
             
+            // Validate budget allocation
+            if (isset($data['allocations']) && !empty($data['allocations'])) {
+                $totalAllocated = 0;
+                foreach ($data['allocations'] as $allocation) {
+                    if (isset($allocation['sanctionedAmount'])) {
+                        $totalAllocated += floatval($allocation['sanctionedAmount']);
+                    }
+                }
+                
+                $proposedBudget = floatval($data['totalSanctionedAmount'] ?? 0);
+                if ($totalAllocated > $proposedBudget) {
+                    throw new Exception("Total allocated amount (₹" . number_format($totalAllocated) . ") exceeds sanctioned amount (₹" . number_format($proposedBudget) . ")");
+                }
+            }
+            
+            // Create project
             $result = $project->create($data);
             
             error_log("Project created successfully: " . json_encode($result));
@@ -68,7 +105,8 @@ try {
                 'success' => true,
                 'message' => 'Project created successfully',
                 'gpNumber' => $result['gpNumber'],
-                'id' => $result['insertedId']
+                'id' => $result['insertedId'],
+                'allocationsCount' => isset($data['allocations']) ? count($data['allocations']) : 0
             ]);
             break;
 
@@ -79,13 +117,38 @@ try {
                 throw new Exception('Project ID is required');
             }
             
-            $data = json_decode(file_get_contents('php://input'), true);
+            $rawData = file_get_contents('php://input');
+            $data = json_decode($rawData, true);
             
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new Exception('Invalid JSON: ' . json_last_error_msg());
             }
             
+            // Update project
             $success = $project->update($id, $data);
+            
+            // Update allocations if provided
+            if (isset($data['allocations']) && !empty($data['allocations'])) {
+                $totalAllocated = 0;
+                foreach ($data['allocations'] as $allocation) {
+                    if (isset($allocation['sanctionedAmount'])) {
+                        $totalAllocated += floatval($allocation['sanctionedAmount']);
+                    }
+                }
+                
+                // Update or create allocations
+                $db->fund_allocations->updateOne(
+                    ['projectId' => $id],
+                    [
+                        '$set' => [
+                            'allocations' => $data['allocations'],
+                            'totalAllocated' => $totalAllocated,
+                            'updatedAt' => new MongoDB\BSON\UTCDateTime()
+                        ]
+                    ],
+                    ['upsert' => true]
+                );
+            }
             
             if ($success) {
                 echo json_encode([

@@ -1,4 +1,7 @@
-// pages/ARDashboard.tsx - FIXED VERSION
+// pages/approvals/ARDashboard.tsx
+// AR = Accounts Representative — SECOND stage in the approval chain
+// CHANGED: "approve/approved" → "recommend/recommended" throughout
+
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,16 +13,18 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApprovalTimeline } from "@/components/ApprovalTimeline";
 import { useState, useEffect } from "react";
-import { Clock, CheckCircle, FileText, History, Loader2, Lock } from "lucide-react";
+import { Search } from "lucide-react";
+import {
+  Clock, CheckCircle, FileText, History, Loader2, Lock, ChevronRight,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { budgetRequestsAPI } from "@/services/api";
 
 interface BudgetRequest {
   id: string;
   gpNumber: string;
   projectTitle: string;
   piName: string;
-  piEmail: string;
   department: string;
   purpose: string;
   description: string;
@@ -29,473 +34,308 @@ interface BudgetRequest {
   status: string;
   currentStage: string;
   createdAt: string;
-  adminRemarks?: string;
+  daRemarks?: string;
   arRemarks?: string;
-  drRemarks?: string;
-  ao2Remarks?: string;
   approvalHistory?: any[];
 }
 
+const formatDate = (d: string) =>
+  !d ? "—" : new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+const formatAmount = (n: number) => `₹${(n / 100000).toFixed(2)}L`;
+
 const ARDashboard = () => {
-  const [selectedRequest, setSelectedRequest] = useState<BudgetRequest | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [remarks, setRemarks] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  
-  const [allPendingRequests, setAllPendingRequests] = useState<BudgetRequest[]>([]);
+  const [myTurnRequests,    setMyTurnRequests]    = useState<BudgetRequest[]>([]);
   const [completedRequests, setCompletedRequests] = useState<BudgetRequest[]>([]);
-  
-  // Filter requests for AR's turn (ready to approve)
-  const myTurnRequests = allPendingRequests.filter(r => r.currentStage === 'ar' && r.status === 'admin_verified');
-  
-  // Requests waiting for previous stages
-  const waitingRequests = allPendingRequests.filter(r => r.currentStage === 'admin' && r.status === 'pending');
-  
-  // Requests at later stages (already approved by AR)
-  const forwardedRequests = allPendingRequests.filter(r => 
-    (r.currentStage === 'dr' && r.status === 'ar_approved') ||
-    (r.currentStage === 'ao2' && r.status === 'dr_approved')
-  );
+  const [loading,           setLoading]           = useState(true);
 
-  const recurringRequests = allPendingRequests.filter(r => r.projectType === "recurring");
-  const nonRecurringRequests = allPendingRequests.filter(r => r.projectType === "non-recurring");
+  const [selectedRequest, setSelectedRequest] = useState<BudgetRequest | null>(null);
+  const [dialogOpen,      setDialogOpen]      = useState(false);
+  const [remarks,         setRemarks]         = useState("");
+  const [actionLoading,   setActionLoading]   = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchRequests(); }, []);
 
-  const fetchData = async () => {
+  const fetchRequests = async () => {
     try {
       setLoading(true);
-      
-      // Fetch ALL pending requests (not just admin_verified)
-      const allRequests = await budgetRequestsAPI.getAll('', '', '');
-      
-      // Filter for non-completed/non-rejected
-      const pending = allRequests.data?.filter((r: BudgetRequest) => 
-        r.status !== 'approved' && r.status !== 'rejected'
-      ) || [];
-      
-      setAllPendingRequests(pending);
-      
-      const completedResponse = await budgetRequestsAPI.getCompleted();
-      setCompletedRequests(completedResponse.data || []);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      toast.error("Failed to load budget requests");
-    } finally {
-      setLoading(false);
-    }
+      const r1 = await fetch("http://localhost:8000/api/get-requests-by-stage.php?stage=ar&type=pending");
+      const d1 = await r1.json();
+      setMyTurnRequests(d1.data || []);
+
+      const r2 = await fetch("http://localhost:8000/api/get-requests-by-stage.php?stage=all&type=completed");
+      const d2 = await r2.json();
+      setCompletedRequests(d2.data || []);
+    } catch { toast.error("Failed to load requests"); }
+    finally   { setLoading(false); }
   };
 
-  const canApproveRequest = (request: BudgetRequest) => {
-    // AR can only approve if it's at AR stage with admin_verified status
-    return request.currentStage === 'ar' && request.status === 'admin_verified';
-  };
+  const canRecommend = (r: BudgetRequest) =>
+    r.currentStage === "ar" && r.status === "da_approved";
 
-  const handleApprove = async () => {
-    if (!selectedRequest) return;
-
-    if (!canApproveRequest(selectedRequest)) {
-      toast.error("Cannot approve: Not at your approval stage yet");
-      return;
-    }
-
+  // CHANGED: handleApprove → handleRecommend
+  const handleRecommend = async () => {
+    if (!selectedRequest || !canRecommend(selectedRequest)) return;
     try {
       setActionLoading(true);
-      await budgetRequestsAPI.arApprove(selectedRequest.id, remarks, "AR Officer");
-      
-      toast.success("Request approved and forwarded to DR");
-      setDialogOpen(false);
-      setSelectedRequest(null);
-      setRemarks("");
-      await fetchData();
-    } catch (error) {
-      toast.error("Failed to approve request");
-    } finally {
-      setActionLoading(false);
-    }
+      const res = await fetch("http://localhost:8000/api/ar-approve.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId: selectedRequest.id, remarks, approvedBy: "AR Officer" }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      toast.success("Request recommended ✅ Forwarded to DR");
+      setDialogOpen(false); setSelectedRequest(null); setRemarks("");
+      await fetchRequests();
+    } catch (e: any) { toast.error(e.message || "Failed to recommend"); }
+    finally  { setActionLoading(false); }
   };
 
   const handleReject = async () => {
-    if (!selectedRequest) return;
-    
-    if (!canApproveRequest(selectedRequest)) {
-      toast.error("Cannot reject: Not at your approval stage yet");
-      return;
-    }
-    
-    if (!remarks.trim()) {
-      toast.error("Please enter remarks for rejection");
-      return;
-    }
-
+    if (!selectedRequest || !canRecommend(selectedRequest)) return;
+    if (!remarks.trim()) { toast.error("Please enter remarks for rejection"); return; }
     try {
       setActionLoading(true);
-      await budgetRequestsAPI.reject(selectedRequest.id, "ar", remarks, "AR Officer");
-      
+      const res = await fetch("http://localhost:8000/api/reject-request.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId: selectedRequest.id, stage: "ar", remarks, rejectedBy: "AR Officer" }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
       toast.error("Request rejected");
-      setDialogOpen(false);
-      setSelectedRequest(null);
-      setRemarks("");
-      await fetchData();
-    } catch (error) {
-      toast.error("Failed to reject request");
-    } finally {
-      setActionLoading(false);
-    }
+      setDialogOpen(false); setSelectedRequest(null); setRemarks("");
+      await fetchRequests();
+    } catch (e: any) { toast.error(e.message || "Failed to reject"); }
+    finally  { setActionLoading(false); }
   };
 
-  const handleViewRequest = (request: BudgetRequest) => {
-    setSelectedRequest(request);
-    setRemarks("");
-    setDialogOpen(true);
-  };
+  const [reqSearch, setReqSearch] = useState("");
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric' 
-    });
-  };
-
-  const formatAmount = (amount: number) => {
-    return `₹${(amount / 100000).toFixed(2)}L`;
-  };
-
-  const getStageLabel = (stage: string, status: string) => {
-    if (stage === 'admin' && status === 'pending') return '⏳ Waiting for Admin';
-    if (stage === 'ar' && status === 'admin_verified') return '👉 Ready for AR Review';
-    if (stage === 'dr' && status === 'ar_approved') return '✅ Approved by AR → At DR';
-    if (stage === 'ao2' && status === 'dr_approved') return '✅ Approved by AR & DR → At AO2';
-    return stage.toUpperCase();
-  };
-
-  const StatusBadge = ({ request }: { request: BudgetRequest }) => {
-    const { currentStage, status } = request;
-    
-    if (currentStage === 'admin' && status === 'pending') {
-      return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">⏳ At Admin</Badge>;
-    }
-    if (currentStage === 'ar' && status === 'admin_verified') {
-      return <Badge className="bg-blue-100 text-blue-800 border-blue-400">👉 Your Turn</Badge>;
-    }
-    if (currentStage === 'dr' && status === 'ar_approved') {
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">✅ At DR</Badge>;
-    }
-    if (currentStage === 'ao2' && status === 'dr_approved') {
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">✅ At AO2</Badge>;
-    }
-    
-    return <Badge variant="secondary">{status}</Badge>;
-  };
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="ml-3">Loading...</p>
-        </div>
-      </Layout>
+  const filterReqs = (list: BudgetRequest[]) => {
+    const q = reqSearch.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter(r =>
+      r.gpNumber?.toLowerCase().includes(q) ||
+      r.piName?.toLowerCase().includes(q) ||
+      r.purpose?.toLowerCase().includes(q) ||
+      r.invoiceNumber?.toLowerCase().includes(q) ||
+      r.department?.toLowerCase().includes(q) ||
+      (r.createdAt && new Date(r.createdAt).getFullYear().toString().includes(q))
     );
-  }
+  };
+
+  const openRequest = (r: BudgetRequest) => { setSelectedRequest(r); setRemarks(""); setDialogOpen(true); };
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">AR Dashboard</h1>
-            <p className="text-muted-foreground mt-1">Assistant Registrar - First level approval</p>
-          </div>
-          <Button onClick={fetchData} variant="outline" size="sm">Refresh</Button>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-gray-50">
+        <div className="space-y-6 p-6">
 
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card className="border-blue-200">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Your Turn</CardTitle>
-              <Clock className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{myTurnRequests.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">Ready for your approval</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Waiting</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{waitingRequests.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">At previous stages</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Forwarded</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{forwardedRequests.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">At next stages</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Pending</CardTitle>
-              <FileText className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{allPendingRequests.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">All active requests</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>All Pending Budget Requests</CardTitle>
-            <CardDescription>View all requests in the workflow - You can only approve requests at AR stage</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="all">
-              <TabsList>
-                <TabsTrigger value="all">All ({allPendingRequests.length})</TabsTrigger>
-                <TabsTrigger value="myturn">My Turn ({myTurnRequests.length})</TabsTrigger>
-                <TabsTrigger value="waiting">Waiting ({waitingRequests.length})</TabsTrigger>
-                <TabsTrigger value="forwarded">Forwarded ({forwardedRequests.length})</TabsTrigger>
-              </TabsList>
-
-              {[
-                { key: "all", requests: allPendingRequests },
-                { key: "myturn", requests: myTurnRequests },
-                { key: "waiting", requests: waitingRequests },
-                { key: "forwarded", requests: forwardedRequests },
-              ].map(({ key, requests }) => (
-                <TabsContent key={key} value={key} className="mt-4">
-                  {requests.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No requests in this category</p>
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>GP Number</TableHead>
-                          <TableHead>PI Name</TableHead>
-                          <TableHead>Purpose</TableHead>
-                          <TableHead className="text-right">Amount</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Current Stage</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {requests.map((request) => (
-                          <TableRow key={request.id} className={canApproveRequest(request) ? 'bg-blue-50' : ''}>
-                            <TableCell>{formatDate(request.createdAt)}</TableCell>
-                            <TableCell className="font-medium">{request.gpNumber}</TableCell>
-                            <TableCell>{request.piName}</TableCell>
-                            <TableCell className="max-w-xs truncate">{request.purpose}</TableCell>
-                            <TableCell className="text-right">{formatAmount(request.amount)}</TableCell>
-                            <TableCell className="capitalize">{request.projectType}</TableCell>
-                            <TableCell><StatusBadge request={request} /></TableCell>
-                            <TableCell>
-                              <Button 
-                                size="sm" 
-                                onClick={() => handleViewRequest(request)}
-                                variant={canApproveRequest(request) ? "default" : "outline"}
-                              >
-                                {canApproveRequest(request) ? 'Review & Approve' : 'View Details'}
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </TabsContent>
-              ))}
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <History className="h-5 w-5 text-muted-foreground" />
-              <CardTitle>History: Completed Requests</CardTitle>
+          {/* Header */}
+          <div className="bg-white/70 backdrop-blur-lg border border-indigo-200/60 rounded-xl p-6 shadow-sm flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">AR Dashboard</h1>
+              <p className="text-sm text-slate-500 mt-0.5">
+                Accounts Representative · Second stage &nbsp;
+                <span className="text-slate-400 font-mono">DA → <strong className="text-indigo-600">AR</strong> → DR</span>
+              </p>
             </div>
-            <CardDescription>All sanctioned or rejected budget requests</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {completedRequests.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No completed requests yet</p>
+            <Button onClick={fetchRequests} variant="outline" size="sm">Refresh</Button>
+          </div>
+
+          {/* Summary cards */}
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              {
+                // CHANGED: "Your Turn" → "At AR"
+                label: "At AR",
+                value: myTurnRequests.length,
+                color: "text-indigo-600",
+                icon: <Clock className="h-4 w-4 text-indigo-500" />,
+                // CHANGED: sub label
+                sub: "DA-processed, awaiting AR recommendation",
+              },
+              {
+                // CHANGED: "Approved" → "Recommended"
+                label: "Recommended",
+                value: completedRequests.filter(r => r.status === "approved").length,
+                color: "text-emerald-600",
+                icon: <CheckCircle className="h-4 w-4 text-emerald-500" />,
+                sub: "Fully recommended & forwarded",
+              },
+              {
+                label: "Rejected",
+                value: completedRequests.filter(r => r.status === "rejected").length,
+                color: "text-rose-600",
+                icon: <ChevronRight className="h-4 w-4 text-rose-500" />,
+                sub: "Rejected at any stage",
+              },
+            ].map(c => (
+              <Card key={c.label} className="border border-slate-200/60 bg-white/70 shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between pb-1 pt-4 px-4">
+                  <CardTitle className="text-xs font-medium text-slate-600">{c.label}</CardTitle>
+                  {c.icon}
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <div className={`text-2xl font-bold ${c.color}`}>{c.value}</div>
+                  <p className="text-xs text-slate-400 mt-0.5">{c.sub}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Requests table */}
+          <Card className="border border-slate-200/60 bg-white/70 backdrop-blur-lg shadow-lg">
+            <CardHeader className="border-b border-slate-100">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="text-base font-semibold text-slate-800">Budget Requests</CardTitle>
+                  <CardDescription className="mt-0.5">Only <strong>DA-processed</strong> requests can be recommended here.</CardDescription>
+                </div>
+                <div className="relative flex-shrink-0">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                  <Input
+                    placeholder="Search GP No., PI, purpose, year…"
+                    value={reqSearch}
+                    onChange={e => setReqSearch(e.target.value)}
+                    className="pl-8 h-8 w-56 text-xs border-slate-200"
+                  />
+                </div>
               </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>GP Number</TableHead>
-                    <TableHead>PI Name</TableHead>
-                    <TableHead>Purpose</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead>Final Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {completedRequests.map((request) => (
-                    <TableRow key={request.id}>
-                      <TableCell>{formatDate(request.createdAt)}</TableCell>
-                      <TableCell className="font-medium">{request.gpNumber}</TableCell>
-                      <TableCell>{request.piName}</TableCell>
-                      <TableCell className="max-w-xs truncate">{request.purpose}</TableCell>
-                      <TableCell className="text-right">{formatAmount(request.amount)}</TableCell>
-                      <TableCell>
-                        {request.status === 'approved' ? (
-                          <Badge className="bg-green-100 text-green-800">✅ Approved</Badge>
-                        ) : (
-                          <Badge variant="destructive">❌ Rejected</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => handleViewRequest(request)}>View Details</Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="p-0">
+              {loading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="h-6 w-6 animate-spin text-indigo-400 mr-2" />
+                  <p className="text-slate-500 text-sm">Loading…</p>
+                </div>
+              ) : (
+                <Tabs defaultValue="myturn">
+                  <div className="px-4 pt-3">
+                    <TabsList className="bg-indigo-50">
+                      {/* CHANGED: "My Turn" → "At AR" */}
+                      <TabsTrigger value="myturn">At AR ({myTurnRequests.length})</TabsTrigger>
+                      {/* CHANGED: "History" → "Processed" */}
+                      <TabsTrigger value="history">Processed ({completedRequests.length})</TabsTrigger>
+                    </TabsList>
+                  </div>
+
+                  <TabsContent value="myturn" className="px-4 pb-4 mt-3">
+                    {filterReqs(myTurnRequests).length === 0 ? (
+                      <EmptyState icon={<Clock className="h-10 w-10" />} message={reqSearch ? "No matching requests." : "No requests pending AR recommendation"} />
+                    ) : (
+                      <RequestsTable requests={filterReqs(myTurnRequests)} canRecommend={canRecommend} onView={openRequest} stageColor="indigo" />
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="history" className="px-4 pb-4 mt-3">
+                    {filterReqs(completedRequests).length === 0 ? (
+                      <EmptyState icon={<History className="h-10 w-10" />} message={reqSearch ? "No matching requests." : "No processed requests yet"} />
+                    ) : (
+                      <HistoryTable requests={filterReqs(completedRequests)} onView={openRequest} />
+                    )}
+                  </TabsContent>
+                </Tabs>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
+      {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Review Budget Request</DialogTitle>
+            {/* CHANGED: dialog title */}
+            <DialogTitle>
+              {selectedRequest && canRecommend(selectedRequest) ? "Review & Recommend (AR Stage)" : "Request Details"}
+            </DialogTitle>
             <DialogDescription>
-              {selectedRequest && canApproveRequest(selectedRequest) 
-                ? "✅ This request is ready for your approval"
-                : "ℹ️ View only - Not at your approval stage yet"}
+              {selectedRequest && canRecommend(selectedRequest)
+                // CHANGED: description
+                ? "✅ This request was processed by DA — you may recommend or reject it"
+                : "ℹ️ View only"}
             </DialogDescription>
           </DialogHeader>
 
           {selectedRequest && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
-                <div>
-                  <p className="text-sm text-muted-foreground">GP Number</p>
-                  <p className="font-medium">{selectedRequest.gpNumber}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Project Type</p>
-                  <Badge variant={selectedRequest.projectType === "recurring" ? "default" : "secondary"}>
-                    {selectedRequest.projectType}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">PI Name</p>
-                  <p className="font-medium">{selectedRequest.piName}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Amount</p>
-                  <p className="font-medium text-lg">{formatAmount(selectedRequest.amount)}</p>
-                </div>
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 gap-4 p-4 bg-indigo-50 rounded-xl border border-indigo-200">
+                {[
+                  ["GP Number",    selectedRequest.gpNumber],
+                  ["PI Name",      selectedRequest.piName],
+                  ["Department",   selectedRequest.department],
+                  ["Amount",       formatAmount(selectedRequest.amount)],
+                  ["Project Type", selectedRequest.projectType],
+                  ["Invoice No.",  selectedRequest.invoiceNumber || "—"],
+                ].map(([label, val]) => (
+                  <div key={label}>
+                    <p className="text-xs text-slate-500">{label}</p>
+                    <p className="text-sm font-medium text-slate-800">{val}</p>
+                  </div>
+                ))}
               </div>
 
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Current Stage</p>
-                <div className="font-medium">
-                  {getStageLabel(selectedRequest.currentStage, selectedRequest.status)}
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Project Title</p>
-                <p className="font-medium">{selectedRequest.projectTitle}</p>
-              </div>
-
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Purpose</p>
-                <p>{selectedRequest.purpose}</p>
-              </div>
-
-              {selectedRequest.description && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Description</p>
-                  <p className="text-sm">{selectedRequest.description}</p>
+              {selectedRequest.daRemarks && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-xs text-blue-600 font-medium mb-1">DA Remarks:</p>
+                  <p className="text-sm text-slate-700">{selectedRequest.daRemarks}</p>
                 </div>
               )}
 
-              {selectedRequest.invoiceNumber && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Invoice Number</p>
-                  <p className="font-mono">{selectedRequest.invoiceNumber}</p>
-                </div>
-              )}
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Purpose</p>
+                <p className="text-sm">{selectedRequest.purpose}</p>
+              </div>
 
-              <ApprovalTimeline 
+              <ApprovalTimeline
                 approvalHistory={selectedRequest.approvalHistory}
                 currentStage={selectedRequest.currentStage}
                 status={selectedRequest.status}
               />
 
-              {canApproveRequest(selectedRequest) && (
-                <div className="space-y-2">
-                  <Label htmlFor="remarks">Your Remarks (Optional)</Label>
+              {canRecommend(selectedRequest) && (
+                <div className="space-y-1.5">
+                  {/* CHANGED: label */}
+                  <Label className="text-sm">Your Remarks (Optional — visible to DR)</Label>
                   <Textarea
-                    id="remarks"
-                    placeholder="Enter your comments"
+                    placeholder="Enter comments for DR to see…"
                     value={remarks}
-                    onChange={(e) => setRemarks(e.target.value)}
+                    onChange={e => setRemarks(e.target.value)}
                     rows={3}
+                    className="border-indigo-200 focus:border-indigo-400"
                   />
                 </div>
               )}
 
-              {!canApproveRequest(selectedRequest) && selectedRequest.status !== 'approved' && selectedRequest.status !== 'rejected' && (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
-                  <Lock className="h-5 w-5 text-yellow-600 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-yellow-900">Not Your Turn Yet</p>
-                    <p className="text-sm text-yellow-700 mt-1">
-                      This request is currently at the <strong>{selectedRequest.currentStage.toUpperCase()}</strong> stage.
-                      You can approve/reject only when it reaches the AR stage.
-                    </p>
-                  </div>
+              {!canRecommend(selectedRequest) &&
+                selectedRequest.status !== "approved" &&
+                selectedRequest.status !== "rejected" && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex gap-3">
+                  <Lock className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+                  {/* CHANGED: message */}
+                  <p className="text-sm text-amber-800">
+                    Currently at <strong>{selectedRequest.currentStage.toUpperCase()}</strong> stage. AR can only recommend DA-processed requests.
+                  </p>
                 </div>
               )}
             </div>
           )}
 
           <DialogFooter>
-            {selectedRequest && canApproveRequest(selectedRequest) ? (
+            {selectedRequest && canRecommend(selectedRequest) ? (
               <>
-                <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={actionLoading}>
-                  Cancel
-                </Button>
+                <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={actionLoading}>Cancel</Button>
                 <Button variant="destructive" onClick={handleReject} disabled={actionLoading}>
-                  {actionLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Rejecting...</> : 'Reject'}
+                  {actionLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Rejecting…</> : "Reject"}
                 </Button>
-                <Button onClick={handleApprove} disabled={actionLoading}>
-                  {actionLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Approving...</> : 'Approve & Forward'}
+                {/* CHANGED: button label */}
+                <Button onClick={handleRecommend} disabled={actionLoading}
+                  className="bg-indigo-700 hover:bg-indigo-800">
+                  {actionLoading
+                    ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Recommending…</>
+                    : "Recommend & Forward to DR ➡"}
                 </Button>
               </>
             ) : (
@@ -507,5 +347,88 @@ const ARDashboard = () => {
     </Layout>
   );
 };
+
+const EmptyState = ({ icon, message }: { icon: React.ReactNode; message: string }) => (
+  <div className="flex flex-col items-center justify-center py-14 text-slate-400">
+    <div className="mb-3 opacity-30">{icon}</div>
+    <p className="text-sm">{message}</p>
+  </div>
+);
+
+// CHANGED: prop canApprove → canRecommend, button label updated
+const RequestsTable = ({ requests, canRecommend, onView, stageColor }: {
+  requests: BudgetRequest[];
+  canRecommend: (r: BudgetRequest) => boolean;
+  onView: (r: BudgetRequest) => void;
+  stageColor: string;
+}) => (
+  <div className="overflow-x-auto rounded-lg border border-slate-200">
+    <Table>
+      <TableHeader>
+        <TableRow className="bg-slate-50">
+          {["Date", "GP Number", "PI Name", "Purpose", "Amount", "DA Remarks", ""].map(h => (
+            <TableHead key={h} className="text-[11px] font-semibold text-slate-600 py-2.5 px-3">{h}</TableHead>
+          ))}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {requests.map(r => (
+          <TableRow key={r.id} className={`border-b border-slate-100 hover:bg-slate-50/50 ${canRecommend(r) ? "bg-indigo-50/40" : ""}`}>
+            <TableCell className="text-xs px-3 text-slate-500">{formatDate(r.createdAt)}</TableCell>
+            <TableCell className="text-xs font-semibold px-3">{r.gpNumber}</TableCell>
+            <TableCell className="text-xs px-3">{r.piName}</TableCell>
+            <TableCell className="text-xs px-3 max-w-[140px] truncate">{r.purpose}</TableCell>
+            <TableCell className="text-xs px-3 font-medium">{formatAmount(r.amount)}</TableCell>
+            <TableCell className="text-xs px-3 text-slate-500 max-w-[120px] truncate italic">
+              {r.daRemarks || "—"}
+            </TableCell>
+            <TableCell className="px-3">
+              <Button size="sm"
+                variant={canRecommend(r) ? "default" : "outline"}
+                className={`h-7 text-xs px-3 ${canRecommend(r) ? "bg-indigo-700 hover:bg-indigo-800" : ""}`}
+                onClick={() => onView(r)}>
+                {/* CHANGED: button label */}
+                {canRecommend(r) ? "Review & Recommend" : "View"}
+              </Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
+);
+
+const HistoryTable = ({ requests, onView }: { requests: BudgetRequest[]; onView: (r: BudgetRequest) => void }) => (
+  <div className="overflow-x-auto rounded-lg border border-slate-200">
+    <Table>
+      <TableHeader>
+        <TableRow className="bg-slate-50">
+          {["Date", "GP Number", "PI Name", "Amount", "Status", ""].map(h => (
+            <TableHead key={h} className="text-xs font-semibold text-slate-600 py-2.5 px-3">{h}</TableHead>
+          ))}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {requests.map(r => (
+          <TableRow key={r.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+            <TableCell className="text-xs px-3 text-slate-500">{formatDate(r.createdAt)}</TableCell>
+            <TableCell className="text-xs font-semibold px-3">{r.gpNumber}</TableCell>
+            <TableCell className="text-xs px-3">{r.piName}</TableCell>
+            <TableCell className="text-xs px-3">{formatAmount(r.amount)}</TableCell>
+            <TableCell className="px-3">
+              {r.status === "approved"
+                // CHANGED: badge labels
+                ? <Badge className="bg-emerald-100 text-emerald-800 text-xs">✅ Recommended</Badge>
+                : <Badge variant="destructive" className="text-xs">❌ Rejected</Badge>}
+            </TableCell>
+            <TableCell className="px-3">
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => onView(r)}>View</Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
+);
 
 export default ARDashboard;

@@ -1,305 +1,498 @@
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import {
+  Table, TableBody, TableCell, TableHead,
+  TableHeader, TableRow,
+} from "@/components/ui/table";
+import {
+  Select, SelectContent, SelectItem,
+  SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Search, Filter, Download } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { projectAPI } from "@/services/api";
-import { useNavigate } from "react-router-dom";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import { useLocation} from "react-router-dom";
-import { useEffect } from "react";
+import ExtendProject from "./ExtendProject";
+import UpdateHeadwise from "./UpdateHeadwise";
+import ReleaseFundsHeadwise from "./ReleaseFundsHeadwise";
+import { openProjectReport } from "./ProjectReportWindow";
+import { BookedAmountDialog } from "./BookedAmountDialog";
+import { ExpenditureDialog }  from "./ExpenditureDialog";
 
+const API = "http://localhost:8000/api";
 
+const ModernManageProjects = () => {
+  const [projects,         setProjects]         = useState([]);
+  const [loading,          setLoading]          = useState(true);
+  const [searchTerm,       setSearchTerm]       = useState("");
+  const [statusFilter,     setStatusFilter]     = useState("all");
+  const [downloadingFile,  setDownloadingFile]  = useState(null);
+  const [processingAction, setProcessingAction] = useState(null);
 
-const CreateProject = () => {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [gpNumber, setGpNumber] = useState<string>("");
+  // Dialogs
+  const [extensionDialogOpen,         setExtensionDialogOpen]         = useState(false);
+  const [selectedProjectForExtension, setSelectedProjectForExtension] = useState(null);
+  const [headwiseDialogOpen,          setHeadwiseDialogOpen]          = useState(false);
+  const [selectedProjectForHeadwise,  setSelectedProjectForHeadwise]  = useState(null);
+  const [releaseDialogOpen,           setReleaseDialogOpen]           = useState(false);
+  const [selectedProjectForRelease,   setSelectedProjectForRelease]   = useState(null);
 
-  const [formData, setFormData] = useState({
-    title: "",
-    projectType: "",
-    piName: "",
-    piEmail: "",
-    department: "",
-    duration: "",
-    proposedBudget: "",
-    description: ""
-  });
+  useEffect(() => { fetchProjects(); }, [searchTerm, statusFilter]);
 
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    setError(null);
-    setSuccess(false);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    console.log("Form submitted with data:", formData);
-    
-    // Validation
-    if (!formData.title || !formData.projectType || !formData.piName || !formData.piEmail || !formData.department || !formData.duration || !formData.proposedBudget) {
-      setError("Please fill in all required fields");
-      return;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.piEmail)) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
+  const fetchProjects = async () => {
     try {
       setLoading(true);
-      setError(null);
-
-      const projectData = {
-        title: formData.title,
-        projectType: formData.projectType,
-        piName: formData.piName,
-        piEmail: formData.piEmail,
-        department: formData.department,
-        duration: parseInt(formData.duration),
-        proposedBudget: parseFloat(formData.proposedBudget),
-        description: formData.description,
-        status: "pending"
-      };
-
-      console.log("Sending to API:", projectData);
-
-      const response = await projectAPI.create(projectData);
-
-      console.log("API Response:", response);
-
-      if (response.success) {
-        setSuccess(true);
-        setGpNumber(response.gpNumber);
-        
-        // Reset form
-        setFormData({
-          title: "",
-          projectType: "",
-          piName: "",
-          piEmail: "",
-          department: "",
-          duration: "",
-          proposedBudget: "",
-          description: ""
-        });
-
-        // Redirect after 3 seconds
-        setTimeout(() => {
-          navigate("/admin/projects");
-        }, 3000);
-      } else {
-        setError(response.message || "Failed to create project");
-      }
-    } catch (err) {
-      console.error("Error creating project:", err);
-      setError(err instanceof Error ? err.message : "Failed to create project. Make sure backend is running on http://localhost:8000");
+      const response = await projectAPI.getAll(searchTerm, statusFilter);
+      if (response.success) setProjects(response.data || []);
+      else setProjects([]);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      setProjects([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDownloadFile = async (project) => {
+    try {
+      setDownloadingFile(project.id);
+      if (project.files && project.files.length > 0) {
+        const sanctionFile = project.files.find((f) => f.fileType === "sanction_letter");
+        if (sanctionFile) {
+          const fileId = sanctionFile.id || sanctionFile._id;
+          if (!fileId) { alert("File ID not found."); return; }
+          const response = await fetch(`${API}/download-file.php?id=${fileId}`);
+          if (!response.ok) throw new Error("Failed to download file");
+          const blob = await response.blob();
+          const url  = window.URL.createObjectURL(blob);
+          const a    = document.createElement("a");
+          a.href = url;
+          a.download = sanctionFile.fileName || `${project.gpNumber}_sanction_letter.pdf`;
+          document.body.appendChild(a); a.click();
+          window.URL.revokeObjectURL(url); document.body.removeChild(a);
+        } else { alert("Sanction letter not found"); }
+      } else if (project.sanctionedLetterFile) {
+        const response = await fetch(`http://localhost:8000${project.sanctionedLetterFile}`);
+        if (!response.ok) throw new Error("Failed to download file");
+        const blob = await response.blob();
+        const url  = window.URL.createObjectURL(blob);
+        const a    = document.createElement("a");
+        a.href = url;
+        a.download = project.sanctionedLetterFileName || `${project.gpNumber}_sanction_letter.pdf`;
+        document.body.appendChild(a); a.click();
+        window.URL.revokeObjectURL(url); document.body.removeChild(a);
+      } else { alert("No sanction letter uploaded"); }
+    } catch (error) {
+      alert("Failed to download file: " + error.message);
+    } finally { setDownloadingFile(null); }
+  };
+
+  const handleHeadWise   = (p) => { setSelectedProjectForHeadwise(p);  setHeadwiseDialogOpen(true);  };
+  const handleRelease    = (p) => { setSelectedProjectForRelease(p);   setReleaseDialogOpen(true);   };
+  const handleExtension  = (p) => { setSelectedProjectForExtension(p); setExtensionDialogOpen(true); };
+  const handleViewReport = (p) => openProjectReport(p);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this project?")) return;
+    try {
+      setProcessingAction(id);
+      const response = await projectAPI.delete(id);
+      if (response.success) { alert("Project deleted successfully"); fetchProjects(); }
+    } catch { alert("Failed to delete project"); }
+    finally { setProcessingAction(null); }
+  };
+
+  // Remaining = Released − Booked + (Booked − Actual)
+  const calcRemaining = (project) => {
+    const released = parseFloat(project.totalReleasedAmount || 0);
+    const booked   = parseFloat(project.amountBookedByPI    || 0);
+    const actual   = parseFloat(project.actualExpenditure   || 0);
+    return Math.max(0, released - booked + Math.max(0, booked - actual));
+  };
+
+  const getStatusBadge = (status) => {
+    const variants: Record<string, string> = {
+      pending:   "bg-amber-50 text-amber-800 border-amber-200",
+      active:    "bg-emerald-50 text-emerald-800 border-emerald-200",
+      completed: "bg-slate-50 text-slate-800 border-slate-200",
+      rejected:  "bg-rose-50 text-rose-800 border-rose-200",
+    };
+    return (
+      <Badge variant="outline" className={`${variants[status] || variants.pending} font-medium px-2.5 py-0.5`}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    );
+  };
+
+  const formatDate = (d) => {
+    if (!d) return "—";
+    try { return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); }
+    catch { return d; }
+  };
+
+  const calcDuration = (start, end) => {
+    if (!start || !end) return "—";
+    try {
+      const days   = Math.ceil(Math.abs(new Date(end).getTime() - new Date(start).getTime()) / 86400000);
+      const years  = Math.floor(days / 365);
+      const months = Math.floor((days % 365) / 30);
+      if (years > 0 && months > 0) return `${years}y ${months}m`;
+      if (years  > 0) return `${years}yr`;
+      if (months > 0) return `${months}mo`;
+      return `${days}d`;
+    } catch { return "—"; }
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-screen bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-800 mx-auto" />
+            <p className="mt-4 text-slate-600 text-sm">Loading projects...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Create New Project</h1>
-          <p className="text-muted-foreground mt-1">Register a new research project and assign GP number</p>
-        </div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="space-y-5 p-6">
 
-        {success && (
-          <Alert className="bg-green-50 border-green-200">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
-              <strong>Success!</strong> Project created successfully with GP Number: <strong>{gpNumber}</strong>
-              <br />
-              <span className="text-sm">Redirecting to projects page...</span>
-            </AlertDescription>
-          </Alert>
-        )}
+          {/* Header */}
+          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <h1 className="text-xl font-bold text-gray-900">Project Management</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Overview of all registered research projects</p>
+          </div>
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Error:</strong> {error}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Project Details</CardTitle>
-              <CardDescription>Enter complete project information</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Row 1: Title and Type */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Project Title *</Label>
+          {/* Search & filter */}
+          <Card className="border border-gray-200 bg-white shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex flex-col md:flex-row gap-3">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    id="title"
-                    placeholder="Enter project title"
-                    value={formData.title}
-                    onChange={(e) => handleChange("title", e.target.value)}
-                    required
+                    placeholder="Search by project name, PI, department..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-9 border-gray-200"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="projectType">Project Type *</Label>
-                  <Select
-                    value={formData.projectType}
-                    onValueChange={(value) => handleChange("projectType", value)}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
+                <div className="w-full md:w-52">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="h-9 border-gray-200">
+                      <Filter className="h-3.5 w-3.5 mr-2 text-gray-400" />
+                      <SelectValue placeholder="Filter Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="recurring">Recurring</SelectItem>
-                      <SelectItem value="non-recurring">Non-Recurring</SelectItem>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              {/* Row 2: PI Name and Email */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="piName">Principal Investigator Name *</Label>
-                  <Input
-                    id="piName"
-                    placeholder="Dr. John Smith"
-                    value={formData.piName}
-                    onChange={(e) => handleChange("piName", e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="piEmail">PI Email *</Label>
-                  <Input
-                    id="piEmail"
-                    type="email"
-                    placeholder="pi@ifms.edu"
-                    value={formData.piEmail}
-                    onChange={(e) => handleChange("piEmail", e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Row 3: Department and Duration */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="department">Department *</Label>
-                  <Select
-                    value={formData.department}
-                    onValueChange={(value) => handleChange("department", value)}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Computer Science & Engineering">Computer Science & Engineering</SelectItem>
-                      <SelectItem value="Electronics & Communication">Electronics & Communication</SelectItem>
-                      <SelectItem value="Mechanical Engineering">Mechanical Engineering</SelectItem>
-                      <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
-                      <SelectItem value="Electrical Engineering">Electrical Engineering</SelectItem>
-                      <SelectItem value="Chemical Engineering">Chemical Engineering</SelectItem>
-                      <SelectItem value="Biotechnology">Biotechnology</SelectItem>
-                      <SelectItem value="Mathematics">Mathematics</SelectItem>
-                      <SelectItem value="Physics">Physics</SelectItem>
-                      <SelectItem value="Chemistry">Chemistry</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="duration">Project Duration (Months) *</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    placeholder="24"
-                    min="1"
-                    max="60"
-                    value={formData.duration}
-                    onChange={(e) => handleChange("duration", e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Row 4: Budget */}
-              <div className="space-y-2">
-                <Label htmlFor="proposedBudget">Proposed Budget (₹) *</Label>
-                <Input
-                  id="proposedBudget"
-                  type="number"
-                  placeholder="5000000"
-                  min="0"
-                  step="1000"
-                  value={formData.proposedBudget}
-                  onChange={(e) => handleChange("proposedBudget", e.target.value)}
-                  required
-                />
-                <p className="text-sm text-muted-foreground">
-                  Enter amount in rupees (e.g., 5000000 for 50 Lakhs)
-                </p>
-              </div>
-
-              {/* Row 5: Description */}
-              <div className="space-y-2">
-                <Label htmlFor="description">Project Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Enter detailed project description"
-                  rows={4}
-                  value={formData.description}
-                  onChange={(e) => handleChange("description", e.target.value)}
-                />
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="flex justify-end gap-4 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate("/admin/projects")}
-                  disabled={loading}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating Project...
-                    </>
-                  ) : (
-                    "Create Project & Generate GP Number"
-                  )}
-                </Button>
               </div>
             </CardContent>
           </Card>
-        </form>
-      </div>
-     
 
+          {/* Projects table */}
+          <Card className="border border-gray-200 bg-white shadow-sm overflow-hidden">
+            <CardContent className="p-0">
+              {projects.length === 0 ? (
+                <div className="text-center py-16">
+                  <p className="text-gray-900 font-semibold">No Projects Found</p>
+                  <p className="text-gray-500 text-sm mt-1">
+                    {searchTerm || statusFilter !== "all"
+                      ? "Try adjusting your search or filters"
+                      : "No projects registered yet"}
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-b border-gray-200 bg-gray-50">
+                        {[
+                          "S.No", "GP Number", "Project Name", "PI Name", "PI Email",
+                          "Department", "Start Date", "End Date", "Duration",
+                          "Sanctioned (₹)", "Released (₹)",
+                          "Booked by PI (₹)", "Actual Exp. (₹)",
+                          "Remaining (₹)",
+                          "Yet to Release (₹)",
+                          "Bank", "Status", "Letter", "Actions",
+                        ].map((h) => (
+                          <TableHead
+                            key={h}
+                            className="text-[11px] font-semibold text-gray-600 uppercase tracking-wide py-3 px-4 whitespace-nowrap"
+                          >
+                            {h}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+
+                    <TableBody>
+                      {projects.map((project, index) => {
+                        const remaining    = calcRemaining(project);
+                        const yetToRelease = parseFloat(project.totalSanctionedAmount || 0)
+                                           - parseFloat(project.totalReleasedAmount   || 0);
+
+                        // Shape for BookedAmountDialog
+                        const bookedDialogProject = {
+                          id:                  project.id,
+                          gpNumber:            project.gpNumber,
+                          projectName:         project.projectName,
+                          department:          project.department,
+                          totalReleasedAmount: parseFloat(project.totalReleasedAmount || 0),
+                          amountBookedByPI:    parseFloat(project.amountBookedByPI    || 0),
+                          actualExpenditure:   parseFloat(project.actualExpenditure   || 0),
+                          availableBalance:    remaining,
+                          heads:               project.heads || [],
+                        };
+
+                        // Shape for ExpenditureDialog
+                        const expenditureDialogProject = {
+                          id:                     project.id,
+                          gpNumber:               project.gpNumber,
+                          projectName:            project.projectName,
+                          department:             project.department,
+                          totalSanctionedAmount:  parseFloat(project.totalSanctionedAmount  || 0),
+                          totalReleasedAmount:    parseFloat(project.totalReleasedAmount     || 0),
+                          amountBookedByPI:       parseFloat(project.amountBookedByPI        || 0),
+                          actualExpenditure:      parseFloat(project.actualExpenditure        || 0),
+                          expenditureComplete:    project.expenditureComplete,
+                          approvedRequestCount:   project.approvedRequestCount,
+                          filledExpenditureCount: project.filledExpenditureCount,
+                          heads:                  project.heads || [],
+                        };
+
+                        return (
+                          <TableRow
+                            key={project.id}
+                            className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                          >
+                            {/* S.No */}
+                            <TableCell className="py-3.5 px-4 text-sm text-gray-500">
+                              {index + 1}
+                            </TableCell>
+
+                            {/* GP Number */}
+                            <TableCell className="py-3.5 px-4 text-sm font-bold text-gray-900">
+                              {project.gpNumber}
+                            </TableCell>
+
+                            {/* Project Name */}
+                            <TableCell className="py-3.5 px-4 text-sm text-gray-800 max-w-[180px]">
+                              <div className="line-clamp-2" title={project.projectName}>
+                                {project.projectName}
+                              </div>
+                            </TableCell>
+
+                            {/* PI Name */}
+                            <TableCell className="py-3.5 px-4 text-sm text-gray-700">
+                              {project.piName}
+                            </TableCell>
+
+                            {/* PI Email */}
+                            <TableCell className="py-3.5 px-4 text-xs text-gray-500">
+                              {project.piEmail || "—"}
+                            </TableCell>
+
+                            {/* Department */}
+                            <TableCell className="py-3.5 px-4 text-sm text-gray-700">
+                              {project.department}
+                            </TableCell>
+
+                            {/* Start Date */}
+                            <TableCell className="py-3.5 px-4 text-sm text-gray-600">
+                              {formatDate(project.projectStartDate)}
+                            </TableCell>
+
+                            {/* End Date */}
+                            <TableCell className="py-3.5 px-4 text-sm text-gray-600">
+                              {formatDate(project.projectEndDate)}
+                            </TableCell>
+
+                            {/* Duration */}
+                            <TableCell className="py-3.5 px-4 text-sm text-gray-600 font-medium">
+                              {calcDuration(project.projectStartDate, project.projectEndDate)}
+                            </TableCell>
+
+                            {/* Sanctioned — fixed, never changes */}
+                            <TableCell className="py-3.5 px-4 text-sm text-gray-900 font-semibold text-right">
+                              {parseFloat(project.totalSanctionedAmount || 0).toLocaleString("en-IN")}
+                            </TableCell>
+
+                            {/* Released — fixed until next release */}
+                            <TableCell className="py-3.5 px-4 text-sm text-emerald-700 font-semibold text-right">
+                              {parseFloat(project.totalReleasedAmount || 0).toLocaleString("en-IN")}
+                            </TableCell>
+
+                            {/* ── Booked by PI — clickable dialog ── */}
+                            <TableCell className="py-3.5 px-4 text-right">
+                              <BookedAmountDialog project={bookedDialogProject} />
+                            </TableCell>
+
+                            {/* ── Actual Exp. — clickable dialog ── */}
+                            <TableCell className="py-3.5 px-4 text-right">
+                              <ExpenditureDialog project={expenditureDialogProject} />
+                            </TableCell>
+
+                            {/* Remaining = Released − Booked + (Booked − Actual) */}
+                            <TableCell className="py-3.5 px-4 text-sm font-semibold text-right">
+                              <span className={
+                                remaining <= 0   ? "text-gray-400" :
+                                remaining < 5000 ? "text-red-700"  : "text-teal-700"
+                              }>
+                                {remaining.toLocaleString("en-IN")}
+                              </span>
+                            </TableCell>
+
+                            {/* Yet to Release = Sanctioned − Released */}
+                            <TableCell className="py-3.5 px-4 text-sm text-amber-700 font-semibold text-right">
+                              {yetToRelease.toLocaleString("en-IN")}
+                            </TableCell>
+
+                            {/* Bank */}
+                            <TableCell className="py-3.5 px-4 text-sm text-gray-600">
+                              {project.bankDetails || "Canara Bank"}
+                            </TableCell>
+
+                            {/* Status */}
+                            <TableCell className="py-3.5 px-4">
+                              {getStatusBadge(project.status)}
+                            </TableCell>
+
+                            {/* Download Sanction Letter */}
+                            <TableCell className="py-3.5 px-4">
+                              {(project.files?.length > 0) || project.sanctionedLetterFile ? (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleDownloadFile(project)}
+                                  disabled={downloadingFile === project.id}
+                                  className="h-7 px-2.5 text-xs bg-gray-700 hover:bg-gray-800 text-white"
+                                >
+                                  <Download className="h-3 w-3 mr-1" />
+                                  {downloadingFile === project.id ? "…" : "Letter"}
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-gray-300">—</span>
+                              )}
+                            </TableCell>
+
+                            {/* Actions */}
+                            <TableCell className="py-3.5 px-4">
+                              <div className="flex flex-wrap gap-1.5">
+
+                                {/* View Report */}
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleViewReport(project)}
+                                  className="h-7 px-2.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white border-0"
+                                >
+                                  Report ↗
+                                </Button>
+
+                                {/* Heads */}
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleHeadWise(project)}
+                                  disabled={processingAction === project.id}
+                                  className="h-7 px-2.5 text-xs bg-gray-500 hover:bg-gray-600 text-white border-0"
+                                >
+                                  Heads
+                                </Button>
+
+                                {/* Release */}
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleRelease(project)}
+                                  disabled={processingAction === project.id}
+                                  className="h-7 px-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+                                >
+                                  Release
+                                </Button>
+
+                                {/* Extend */}
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleExtension(project)}
+                                  disabled={processingAction === project.id}
+                                  className="h-7 px-2.5 text-xs bg-amber-600 hover:bg-amber-700 text-white border-0"
+                                >
+                                  Extend
+                                </Button>
+
+                                {/* Delete */}
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleDelete(project.id)}
+                                  disabled={processingAction === project.id}
+                                  className="h-7 px-2.5 text-xs bg-red-600 hover:bg-red-700 text-white border-0"
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              {projects.length > 0 && (
+                <div className="px-5 py-2.5 border-t border-gray-100 bg-gray-50">
+                  <p className="text-xs text-gray-500">
+                    Showing{" "}
+                    <span className="font-semibold text-gray-800">{projects.length}</span>{" "}
+                    project{projects.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Extension dialog */}
+      {selectedProjectForExtension && (
+        <ExtendProject
+          open={extensionDialogOpen}
+          onClose={() => { setExtensionDialogOpen(false); setSelectedProjectForExtension(null); }}
+          project={selectedProjectForExtension}
+          onSuccess={fetchProjects}
+        />
+      )}
+
+      {/* Head-wise update dialog */}
+      {selectedProjectForHeadwise && (
+        <UpdateHeadwise
+          open={headwiseDialogOpen}
+          onClose={() => { setHeadwiseDialogOpen(false); setSelectedProjectForHeadwise(null); }}
+          project={selectedProjectForHeadwise}
+          onSuccess={fetchProjects}
+        />
+      )}
+
+      {/* Release funds dialog */}
+      {selectedProjectForRelease && (
+        <ReleaseFundsHeadwise
+          open={releaseDialogOpen}
+          onClose={() => { setReleaseDialogOpen(false); setSelectedProjectForRelease(null); }}
+          project={selectedProjectForRelease}
+          onSuccess={fetchProjects}
+        />
+      )}
     </Layout>
   );
 };
 
-export default CreateProject;
+export default ModernManageProjects;
