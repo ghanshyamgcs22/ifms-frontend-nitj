@@ -62,7 +62,7 @@ interface Project {
   status: string;
 }
 
-const API = "http://localhost:8000/api";
+const API = "https://ifms-backend-nitj.onrender.com/api";
 const fmtINR  = (n: number) => parseFloat(String(n || 0)).toLocaleString("en-IN");
 const fmtDate = (d: string) => d
   ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })

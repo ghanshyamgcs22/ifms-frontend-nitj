@@ -20,7 +20,7 @@ const ProjectExtensionHistory = ({ projectId, gpNumber }: ExtensionHistoryProps)
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:8000/api/extend-project.php?projectId=${projectId}`
+        `https://ifms-backend-nitj.onrender.com/api/extend-project.php?projectId=${projectId}`
       );
       const data = await response.json();
 

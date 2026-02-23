@@ -636,7 +636,7 @@ export const openProjectReport = async (project) => {
   win.document.close();
 
   try {
-    const res  = await fetch(`http://localhost:8000/api/get-project-report.php?projectId=${project.id}`);
+    const res  = await fetch(`https://ifms-backend-nitj.onrender.com/api/get-project-report.php?projectId=${project.id}`);
     const json = await res.json();
     if (!json.success) throw new Error(json.message || "Server error");
     const html = buildReportHTML(json.data);

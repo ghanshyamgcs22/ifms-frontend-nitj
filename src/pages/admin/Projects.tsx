@@ -21,7 +21,7 @@ import { openProjectReport } from "./ProjectReportWindow";
 import { BookedAmountDialog } from "./BookedAmountDialog";
 import { ExpenditureDialog }  from "./ExpenditureDialog";
 
-const API = "http://localhost:8000/api";
+const API = "https://ifms-backend-nitj.onrender.com/api";
 
 const ModernManageProjects = () => {
   const [projects,         setProjects]         = useState([]);
@@ -74,7 +74,7 @@ const ModernManageProjects = () => {
           window.URL.revokeObjectURL(url); document.body.removeChild(a);
         } else { alert("Sanction letter not found"); }
       } else if (project.sanctionedLetterFile) {
-        const response = await fetch(`http://localhost:8000${project.sanctionedLetterFile}`);
+        const response = await fetch(`https://ifms-backend-nitj.onrender.com${project.sanctionedLetterFile}`);
         if (!response.ok) throw new Error("Failed to download file");
         const blob = await response.blob();
         const url  = window.URL.createObjectURL(blob);

@@ -110,7 +110,7 @@ const Departments = () => {
             <AlertDescription>
               <strong>Error:</strong> {error}
               <br />
-              <span className="text-sm">Make sure backend is running on http://localhost:8000</span>
+              <span className="text-sm">Make sure backend is running on https://ifms-backend-nitj.onrender.com</span>
             </AlertDescription>
           </Alert>
         )}

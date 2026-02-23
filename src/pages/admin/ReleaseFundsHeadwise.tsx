@@ -80,7 +80,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
       setLoading(true);
       
       const response = await fetch(
-        `http://localhost:8000/api/fund-allocations.php?projectId=${project.id}`
+        `https://ifms-backend-nitj.onrender.com/api/fund-allocations.php?projectId=${project.id}`
       );
       const data = await response.json();
 
@@ -280,7 +280,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
   })),
 };
 
-      const response = await fetch("http://localhost:8000/api/release-funds-headwise.php", {
+      const response = await fetch("https://ifms-backend-nitj.onrender.com/api/release-funds-headwise.php", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -59,11 +59,11 @@ const DRDashboard = () => {
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const r1 = await fetch("http://localhost:8000/api/get-requests-by-stage.php?stage=dr&type=pending");
+      const r1 = await fetch("https://ifms-backend-nitj.onrender.com/api/get-requests-by-stage.php?stage=dr&type=pending");
       const d1 = await r1.json();
       setMyTurnRequests(d1.data || []);
 
-      const r2 = await fetch("http://localhost:8000/api/get-requests-by-stage.php?stage=all&type=completed");
+      const r2 = await fetch("https://ifms-backend-nitj.onrender.com/api/get-requests-by-stage.php?stage=all&type=completed");
       const d2 = await r2.json();
       setCompletedRequests(d2.data || []);
     } catch { toast.error("Failed to load requests"); }
@@ -77,7 +77,7 @@ const DRDashboard = () => {
     if (!selectedRequest || !canApprove(selectedRequest)) return;
     try {
       setActionLoading(true);
-      const res = await fetch("http://localhost:8000/api/dr-approve.php", {
+      const res = await fetch("https://ifms-backend-nitj.onrender.com/api/dr-approve.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requestId: selectedRequest.id, remarks, approvedBy: "Director" }),
@@ -97,7 +97,7 @@ const DRDashboard = () => {
     if (!remarks.trim()) { toast.error("Please enter remarks for rejection"); return; }
     try {
       setActionLoading(true);
-      const res = await fetch("http://localhost:8000/api/reject-request.php", {
+      const res = await fetch("https://ifms-backend-nitj.onrender.com/api/reject-request.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requestId: selectedRequest.id, stage: "dr", remarks, rejectedBy: "Director" }),

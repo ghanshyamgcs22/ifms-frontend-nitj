@@ -42,7 +42,7 @@ interface Project {
   status: string;
 }
 
-const API      = "http://localhost:8000/api";
+const API      = "https://ifms-backend-nitj.onrender.com/api";
 const PI_EMAIL = "pi@ifms.edu";
 
 const fmtINR = (n: number) =>

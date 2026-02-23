@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { CheckCircle2, Clock, ChevronDown, ChevronRight, Loader2, Banknote } from "lucide-react";
 
-const API = "http://localhost:8000/api";
+const API = "https://ifms-backend-nitj.onrender.com/api";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface RequestRow {

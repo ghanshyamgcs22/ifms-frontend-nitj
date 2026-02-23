@@ -1,6 +1,6 @@
 // services/api.js - CORRECTED VERSION
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = 'https://ifms-backend-nitj.onrender.com/api';
 
 const handleResponse = async (response) => {
   console.log("📡 Response status:", response.status);

@@ -73,7 +73,7 @@ const CreateProject = () => {
   const fetchNextGPNumber = async () => {
     try {
       setLoadingGP(true);
-      const response = await fetch("http://localhost:8000/api/get-next-gp-number.php");
+      const response = await fetch("https://ifms-backend-nitj.onrender.com/api/get-next-gp-number.php");
       const data = await response.json();
       
       if (data.success) {
@@ -94,7 +94,7 @@ const CreateProject = () => {
 
   const fetchProjectHeads = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/project-heads.php");
+      const response = await fetch("https://ifms-backend-nitj.onrender.com/api/project-heads.php");
       const data = await response.json();
       
       if (data.success) {
@@ -301,7 +301,7 @@ const CreateProject = () => {
 
       delete projectData.sanctionedLetterFile;
 
-      const response = await fetch("http://localhost:8000/api/projects.php", {
+      const response = await fetch("https://ifms-backend-nitj.onrender.com/api/projects.php", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -326,7 +326,7 @@ const CreateProject = () => {
         formDataFile.append('fileType', 'sanction_letter');
         formDataFile.append('uploadedBy', 'admin_user');
 
-        const fileResponse = await fetch("http://localhost:8000/api/upload-file.php", {
+        const fileResponse = await fetch("https://ifms-backend-nitj.onrender.com/api/upload-file.php", {
           method: "POST",
           body: formDataFile,
         });

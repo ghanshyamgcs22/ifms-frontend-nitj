@@ -96,7 +96,7 @@ const BookBudget = () => {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const res  = await fetch(`http://localhost:8000/api/get-pi-projects.php?piEmail=${PI_EMAIL}`);
+      const res  = await fetch(`https://ifms-backend-nitj.onrender.com/api/get-pi-projects.php?piEmail=${PI_EMAIL}`);
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
       // Only projects with released funds are returned by the backend
@@ -166,7 +166,7 @@ const BookBudget = () => {
         invoiceNumber:form.invoiceNumber,
       };
 
-      const res  = await fetch("http://localhost:8000/api/create-budget-requests.php", {
+      const res  = await fetch("https://ifms-backend-nitj.onrender.com/api/create-budget-requests.php", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify(payload),

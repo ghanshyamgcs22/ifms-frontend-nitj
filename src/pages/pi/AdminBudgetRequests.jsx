@@ -50,7 +50,7 @@ const AdminBudgetRequests = () => {
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      let url = "http://localhost:8000/api/get-budget-requests.php";
+      let url = "https://ifms-backend-nitj.onrender.com/api/get-budget-requests.php";
       if (statusFilter !== "all") {
         url += `?status=${statusFilter}`;
       }
@@ -93,7 +93,7 @@ const AdminBudgetRequests = () => {
       setProcessing(true);
 
       const response = await fetch(
-        "http://localhost:8000/api/verify-budget-request.php",
+        "https://ifms-backend-nitj.onrender.com/api/verify-budget-request.php",
         {
           method: "POST",
           headers: {

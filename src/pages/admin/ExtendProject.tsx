@@ -119,7 +119,7 @@ const ExtendProject = ({ open, onClose, project, onSuccess }: ExtendProjectProps
         formData.append("extensionPdf", selectedFile);
       }
 
-      const response = await fetch("http://localhost:8000/api/extend-project.php", {
+      const response = await fetch("https://ifms-backend-nitj.onrender.com/api/extend-project.php", {
         method: "POST",
         body: formData, // no Content-Type header — browser sets multipart boundary automatically
       });

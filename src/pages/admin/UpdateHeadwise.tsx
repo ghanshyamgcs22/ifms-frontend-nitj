@@ -76,7 +76,7 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
       setLoading(true);
       
       const response = await fetch(
-        `http://localhost:8000/api/fund-allocations.php?projectId=${project.id}`
+        `https://ifms-backend-nitj.onrender.com/api/fund-allocations.php?projectId=${project.id}`
       );
       const data = await response.json();
 
@@ -100,7 +100,7 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
       } else {
         // Fallback to project.heads
         const projectResponse = await fetch(
-          `http://localhost:8000/api/projects.php?id=${project.id}`
+          `https://ifms-backend-nitj.onrender.com/api/projects.php?id=${project.id}`
         );
         const projectData = await projectResponse.json();
         
@@ -335,7 +335,7 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
         releasedAmount: parseFloat(alloc.editReleased),
       }));
 
-      const response = await fetch("http://localhost:8000/api/update-project-allocations.php", {
+      const response = await fetch("https://ifms-backend-nitj.onrender.com/api/update-project-allocations.php", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
