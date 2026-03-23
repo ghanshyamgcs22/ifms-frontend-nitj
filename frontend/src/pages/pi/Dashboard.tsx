@@ -34,7 +34,7 @@ interface Project {
   filledExpenditureCount: number; availableBalance: number; status: string;
 }
 
-const API = import.meta.env.VITE_API_URL || "https://ifms-backend-nitj.onrender.com/api";
+const API = import.meta.env.VITE_API_URL;
 const PI_EMAIL="pi@ifms.edu";
 const PI_NAME="Dr. Suresh Patel";
 const PI_DEPT="Research & Development";

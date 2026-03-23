@@ -21,7 +21,7 @@ import { openProjectReport } from "./ProjectReportWindow";
 import { BookedAmountDialog } from "./BookedAmountDialog";
 import { ExpenditureDialog }  from "./ExpenditureDialog";
 
-const API = import.meta.env.VITE_API_URL || "https://ifms-backend-nitj.onrender.com/api";
+const API = import.meta.env.VITE_API_URL;
 
 const ModernManageProjects = () => {
   const [projects,         setProjects]         = useState([]);

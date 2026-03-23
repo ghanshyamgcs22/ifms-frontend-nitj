@@ -55,7 +55,7 @@ interface Project {
   status: string;
 }
 
-const API = import.meta.env.VITE_API_URL || "https://ifms-backend-nitj.onrender.com/api";
+const API = import.meta.env.VITE_API_URL;
 const fmtINR  = (n: number) => parseFloat(String(n || 0)).toLocaleString("en-IN");
 const fmtDate = (d: string) => d
   ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })

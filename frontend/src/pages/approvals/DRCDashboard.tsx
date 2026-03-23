@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-const API = import.meta.env.VITE_API_URL || "https://ifms-backend-nitj.onrender.com/api";
+const API = import.meta.env.VITE_API_URL;
 
 interface BudgetRequest {
   id: string; gpNumber: string; projectTitle: string; piName: string; department: string;

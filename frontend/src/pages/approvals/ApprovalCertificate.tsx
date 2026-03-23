@@ -10,7 +10,7 @@ import { Loader2, Printer, ArrowLeft, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-const API = import.meta.env.VITE_API_URL || "https://ifms-backend-nitj.onrender.com/api";
+const API = import.meta.env.VITE_API_URL;
 
 interface CertificateData {
   requestId: string; requestNumber: string; fileNumber: string; approvedDate: string;
