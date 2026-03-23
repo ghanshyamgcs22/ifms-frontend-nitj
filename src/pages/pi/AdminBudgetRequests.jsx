@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,7 @@ const AdminBudgetRequests = () => {
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      let url = "https://ifms-backend-nitj.onrender.com/api/get-budget-requests.php";
+      let url = ${import.meta.env.VITE_API_URL}/get-budget-requests.php";
       if (statusFilter !== "all") {
         url += `?status=${statusFilter}`;
       }
@@ -93,7 +93,7 @@ const AdminBudgetRequests = () => {
       setProcessing(true);
 
       const response = await fetch(
-        "https://ifms-backend-nitj.onrender.com/api/verify-budget-request.php",
+        ${import.meta.env.VITE_API_URL}/verify-budget-request.php",
         {
           method: "POST",
           headers: {
@@ -259,8 +259,8 @@ const AdminBudgetRequests = () => {
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">PI Name</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Head</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Purpose</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700">Amount (₹)</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700">Available (₹)</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700">Amount (â‚¹)</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700">Available (â‚¹)</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Status</th>
                       <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700">Actions</th>
                     </tr>
@@ -376,7 +376,7 @@ const AdminBudgetRequests = () => {
                   <div>
                     <Label className="text-xs text-gray-600">Amount Requested</Label>
                     <p className="font-semibold text-green-600">
-                      ₹{parseFloat(selected Request.requestedAmount).toLocaleString("en-IN")}
+                      â‚¹{parseFloat(selected Request.requestedAmount).toLocaleString("en-IN")}
                     </p>
                   </div>
                   <div>
@@ -430,13 +430,13 @@ const AdminBudgetRequests = () => {
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Amount:</span>
                     <span className="font-semibold text-green-600">
-                      ₹{parseFloat(selectedRequest.requestedAmount).toLocaleString("en-IN")}
+                      â‚¹{parseFloat(selectedRequest.requestedAmount).toLocaleString("en-IN")}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Available Balance:</span>
                     <span className="font-semibold text-blue-600">
-                      ₹{parseFloat(selectedRequest.currentHeadAvailable).toLocaleString("en-IN")}
+                      â‚¹{parseFloat(selectedRequest.currentHeadAvailable).toLocaleString("en-IN")}
                     </span>
                   </div>
                 </div>

@@ -1,11 +1,11 @@
-/**
+﻿/**
  * ProjectReportWindow.jsx  v2
  * Full institutional project report with:
  *  - Correct fund release history (from fund_releases collection)
  *  - Per-release booking sections
  *  - effectiveAmount logic (actual if DA filled, else booked)
  *  - Actual expenditure per row with timestamp when DA entered it
- *  - Available balance = Released − Effective Booked
+ *  - Available balance = Released âˆ’ Effective Booked
  */
 
 const INR = (n) =>
@@ -23,7 +23,7 @@ const statusLabel = (s) => ({
   ar_approved: "AR Approved",
   sanctioned:  "Sanctioned",
   released:    "Released",
-}[s?.toLowerCase()] || s || "—");
+}[s?.toLowerCase()] || s || "â€”");
 
 const stageName = (s) => ({
   pi:    "Principal Investigator",
@@ -31,7 +31,7 @@ const stageName = (s) => ({
   ar:    "Assistant Registrar",
   dr:    "Deputy Registrar",
   admin: "Administrator",
-}[s?.toLowerCase()] || s || "—");
+}[s?.toLowerCase()] || s || "â€”");
 
 const buildReportHTML = (data) => {
   const { project: p, allocations, releaseHistory, releaseGroups, budgetRequests, extensions, summary } = data;
@@ -74,7 +74,7 @@ const buildReportHTML = (data) => {
       ${sub ? `<div style="font-size:10px;color:#6b7280;margin-top:2px;">${esc(sub)}</div>` : ""}
     </div>`;
 
-  /* ── SECTION 2: Fund Release History ──────────────────────────────────── */
+  /* â”€â”€ SECTION 2: Fund Release History â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const releaseHistoryHTML = (releases) => {
     if (!releases || releases.length === 0)
       return `<p style="font-size:12px;color:#6b7280;font-style:italic;">No fund releases recorded.</p>`;
@@ -98,12 +98,12 @@ const buildReportHTML = (data) => {
       return `
         <tr style="background:${i%2===0?"#fff":"#f8fafc"};">
           ${td(String(i+1), true)}
-          ${td(`<span style="font-family:monospace;font-weight:700;color:#1a3a5c;">${esc(r.releaseNumber||"—")}</span>`)}
-          ${td(esc(r.letterNumber||"—"), false, true)}
-          ${td(esc(r.letterDate||"—"))}
+          ${td(`<span style="font-family:monospace;font-weight:700;color:#1a3a5c;">${esc(r.releaseNumber||"â€”")}</span>`)}
+          ${td(esc(r.letterNumber||"â€”"), false, true)}
+          ${td(esc(r.letterDate||"â€”"))}
           ${td(amt(r.totalReleased), true)}
-          ${td(esc(r.releasedBy||"—"))}
-          ${td(esc(r.releasedAt||"—"))}
+          ${td(esc(r.releasedBy||"â€”"))}
+          ${td(esc(r.releasedAt||"â€”"))}
         </tr>
         ${hwRows}`;
     }).join("");
@@ -125,7 +125,7 @@ const buildReportHTML = (data) => {
       </table>`;
   };
 
-  /* ── SECTION 4: Per-release booking groups ──────────────────────────────── */
+  /* â”€â”€ SECTION 4: Per-release booking groups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const releaseGroupsHTML = (groups) => {
     if (!groups || groups.length === 0)
       return `<p style="font-size:12px;color:#6b7280;font-style:italic;">No approved bookings found.</p>`;
@@ -135,15 +135,15 @@ const buildReportHTML = (data) => {
         const reqRows = (head.requests || []).map((req, ri) => `
           <tr style="background:${req.expenditureFilled?"#f0fdf4":ri%2===0?"#fff":"#f8fafc"};">
             ${td(String(ri+1),true)}
-            ${td(`<span style="font-family:monospace;font-weight:600;color:#1a3a5c;">${esc(req.requestNumber||"—")}</span>`)}
-            ${td(esc(req.purpose||"—"))}
-            ${td(esc(req.invoiceNumber||"—"),false,true)}
+            ${td(`<span style="font-family:monospace;font-weight:600;color:#1a3a5c;">${esc(req.requestNumber||"â€”")}</span>`)}
+            ${td(esc(req.purpose||"â€”"))}
+            ${td(esc(req.invoiceNumber||"â€”"),false,true)}
             ${td(amt(req.amount),true)}
             ${td(req.expenditureFilled
               ? `<strong style="color:#166534;">${amt(req.actualExpenditure)}</strong>`
               : `<em style="color:#92400e;">Pending DA</em>`, true)}
-            ${td(req.expenditureFilled ? esc(req.actualEnteredAt||"—") : "—")}
-            ${td(esc(req.createdAt||"—"))}
+            ${td(req.expenditureFilled ? esc(req.actualEnteredAt||"â€”") : "â€”")}
+            ${td(esc(req.createdAt||"â€”"))}
           </tr>`).join("");
 
         const headBooked = (head.requests||[]).reduce((s,r) => s + r.effectiveAmount, 0);
@@ -174,7 +174,7 @@ const buildReportHTML = (data) => {
         <div style="margin-bottom:24px;border:1px solid #93c5fd;border-radius:4px;overflow:hidden;">
           <div style="background:#1e3a5f;color:#fff;padding:11px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
             <div>
-              <span style="font-size:14px;font-weight:800;">Release ${gi+1} — ${esc(grp.releaseNumber)}</span>
+              <span style="font-size:14px;font-weight:800;">Release ${gi+1} â€” ${esc(grp.releaseNumber)}</span>
               ${grp.letterDate ? `<span style="font-size:11px;opacity:.7;margin-left:10px;">Letter Date: ${esc(grp.letterDate)}</span>` : ""}
               ${grp.letterNumber ? `<span style="font-size:11px;opacity:.7;margin-left:8px;">Ref: ${esc(grp.letterNumber)}</span>` : ""}
             </div>
@@ -198,17 +198,17 @@ const buildReportHTML = (data) => {
     }).join("");
   };
 
-  /* ── SECTION 5: Head-wise summary ────────────────────────────────────────── */
+  /* â”€â”€ SECTION 5: Head-wise summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const headSection = (alloc, hIdx) => {
     const relRows = (alloc.releases||[]).map((r,i) => `
       <tr style="background:${i%2===0?"#fff":"#f8fafc"};">
         ${td(String(i+1),true)}
-        ${td(`<span style="font-family:monospace;">${esc(r.releaseNumber||"—")}</span>`)}
-        ${td(esc(r.letterNumber||"—"),false,true)}
+        ${td(`<span style="font-family:monospace;">${esc(r.releaseNumber||"â€”")}</span>`)}
+        ${td(esc(r.letterNumber||"â€”"),false,true)}
         ${td(amt(r.amountReleased),true)}
-        ${td(esc(r.newTotal!=null?amt(r.newTotal):"—"),true)}
-        ${td(esc(r.releasedBy||"—"))}
-        ${td(esc(r.releasedAt||"—"))}
+        ${td(esc(r.newTotal!=null?amt(r.newTotal):"â€”"),true)}
+        ${td(esc(r.releasedBy||"â€”"))}
+        ${td(esc(r.releasedAt||"â€”"))}
       </tr>`).join("");
 
     return `
@@ -268,13 +268,13 @@ const buildReportHTML = (data) => {
                   <tr style="background:${bk.expenditureFilled?"#f0fdf4":i%2===0?"#fff":"#f8fafc"};">
                     ${td(String(i+1),true)}
                     ${td(`<span style="font-family:monospace;font-weight:700;color:#1a3a5c;">${esc(bk.requestNumber)}</span>`)}
-                    ${td(esc(bk.purpose||"—"))}
-                    ${td(esc(bk.invoiceNumber||"—"),false,true)}
+                    ${td(esc(bk.purpose||"â€”"))}
+                    ${td(esc(bk.invoiceNumber||"â€”"),false,true)}
                     ${td(amt(bk.amount),true)}
                     ${td(bk.expenditureFilled
                       ? `<strong style="color:#166534;">${amt(bk.actualExpenditure)}</strong>`
                       : `<em style="color:#92400e;">Pending</em>`,true)}
-                    ${td(esc(bk.actualEnteredAt||"—"))}
+                    ${td(esc(bk.actualEnteredAt||"â€”"))}
                     ${td(esc(statusLabel(bk.status)))}
                   </tr>`).join("")}
                 </tbody>
@@ -283,7 +283,7 @@ const buildReportHTML = (data) => {
       </div>`;
   };
 
-  /* ── EXTENSIONS ─────────────────────────────────────────────────────────── */
+  /* â”€â”€ EXTENSIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const extensionSection = (exts) => {
     if (exts.length === 0)
       return `<p style="font-size:12px;color:#6b7280;font-style:italic;">No extensions granted.</p>`;
@@ -297,24 +297,24 @@ const buildReportHTML = (data) => {
         ${exts.map((e,i) => `
           <tr style="background:${i%2===0?"#fff":"#f8fafc"};">
             ${td(String(i+1),true)}
-            ${td(`<span style="color:#92400e;font-weight:600;">${esc(e.originalEndDate||"—")}</span>`)}
-            ${td(`<strong style="color:#166534;">${esc(e.extendedEndDate||"—")}</strong>`)}
-            ${td(e.additionalYears>0?`<strong style="color:#1a3a5c;">${e.additionalYears} Yr(s)</strong>`:"—")}
-            ${td(esc(e.extendedBy||"—"))}
-            ${td(`<span style="font-family:monospace;font-size:11px;">${esc(e.extendedAt||"—")}</span>`)}
-            ${td(e.remarks?`<em style="color:#374151;">${esc(e.remarks)}</em>`:`<span style="color:#9ca3af;">—</span>`)}
+            ${td(`<span style="color:#92400e;font-weight:600;">${esc(e.originalEndDate||"â€”")}</span>`)}
+            ${td(`<strong style="color:#166534;">${esc(e.extendedEndDate||"â€”")}</strong>`)}
+            ${td(e.additionalYears>0?`<strong style="color:#1a3a5c;">${e.additionalYears} Yr(s)</strong>`:"â€”")}
+            ${td(esc(e.extendedBy||"â€”"))}
+            ${td(`<span style="font-family:monospace;font-size:11px;">${esc(e.extendedAt||"â€”")}</span>`)}
+            ${td(e.remarks?`<em style="color:#374151;">${esc(e.remarks)}</em>`:`<span style="color:#9ca3af;">â€”</span>`)}
             ${td(e.hasPdf?`<span style="color:#166534;font-weight:700;">Yes</span><span style="display:block;font-size:10px;color:#6b7280;">${esc(e.pdfOriginalName)}</span>`:`<span style="color:#9ca3af;">No</span>`)}
           </tr>`).join("")}
         </tbody>
       </table>`;
   };
 
-  /* ── FULL PAGE ─────────────────────────────────────────────────────────── */
+  /* â”€â”€ FULL PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<title>Report — ${esc(p.gpNumber)}</title>
+<title>Report â€” ${esc(p.gpNumber)}</title>
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
 body { font-family:Georgia,'Times New Roman',serif; background:#eef1f5; color:#111827; }
@@ -328,7 +328,7 @@ body { font-family:Georgia,'Times New Roman',serif; background:#eef1f5; color:#1
   <div style="flex:1;min-width:0;">
     <div style="font-size:10px;color:#93c5fd;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Project Comprehensive Report</div>
     <div style="color:#fff;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-      ${esc(p.gpNumber)} — ${esc(p.projectName)}
+      ${esc(p.gpNumber)} â€” ${esc(p.projectName)}
     </div>
   </div>
   <div style="display:flex;gap:8px;flex-shrink:0;">
@@ -380,12 +380,12 @@ body { font-family:Georgia,'Times New Roman',serif; background:#eef1f5; color:#1
         <tbody>
           ${irow("Sanction Order No.",`<span style="font-family:monospace;">${esc(p.sanctionOrderNo)}</span>`)}
           ${irow("Bank",esc(p.bankDetails))}
-          ${irow("Start Date",esc(p.projectStartDate||"—"))}
-          ${irow("End Date",esc(p.projectEndDate||"—")+(p.hasExtension?` <span style="font-size:10px;font-weight:700;color:#92400e;margin-left:5px;">(EXTENDED)</span>`:""))}
-          ${irow("Original End Date",esc(p.originalEndDate||"—"))}
+          ${irow("Start Date",esc(p.projectStartDate||"â€”"))}
+          ${irow("End Date",esc(p.projectEndDate||"â€”")+(p.hasExtension?` <span style="font-size:10px;font-weight:700;color:#92400e;margin-left:5px;">(EXTENDED)</span>`:""))}
+          ${irow("Original End Date",esc(p.originalEndDate||"â€”"))}
           ${irow("Duration",esc(p.totalYears+" Year(s)"))}
-          ${irow("Registered On",esc(p.createdAt||"—"))}
-          ${irow("Last Updated",esc(p.updatedAt||"—"))}
+          ${irow("Registered On",esc(p.createdAt||"â€”"))}
+          ${irow("Last Updated",esc(p.updatedAt||"â€”"))}
         </tbody>
       </table>
     </div>
@@ -397,7 +397,7 @@ body { font-family:Georgia,'Times New Roman',serif; background:#eef1f5; color:#1
       ${amtBox("Total Released",amt(summary.totalReleased),`Pending: ${amt(summary.unreleasedAmount)}`)}
       ${amtBox("Total Booked (Effective)",amt(summary.totalBooked),"Based on effectiveAmount")}
       ${amtBox("Actual Expenditure (DA)",amt(summary.totalActual))}
-      ${amtBox("Available Balance",amt(summary.piBalance),"Released − Booked",true)}
+      ${amtBox("Available Balance",amt(summary.piBalance),"Released âˆ’ Booked",true)}
       ${amtBox("Utilisation Rate",summary.utilizationPct+"%",`${summary.approvedRequests} approved / ${summary.pendingRequests} pending / ${summary.rejectedRequests} rejected`)}
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:12px;">
@@ -407,9 +407,9 @@ body { font-family:Georgia,'Times New Roman',serif; background:#eef1f5; color:#1
           ["Total Sanctioned Amount",                    amt(summary.totalSanctioned)],
           ["Total Released to PI",                       amt(summary.totalReleased)],
           ["Unreleased (Pending Release)",               amt(summary.unreleasedAmount)],
-          ["Total Booked (Effective — actual where filled)", amt(summary.totalBooked)],
+          ["Total Booked (Effective â€” actual where filled)", amt(summary.totalBooked)],
           ["Actual Expenditure (DA Entered)",            amt(summary.totalActual)],
-          ["Available Balance (Released − Booked)",     amt(summary.piBalance)],
+          ["Available Balance (Released âˆ’ Booked)",     amt(summary.piBalance)],
           ["Utilisation %",                              summary.utilizationPct+"%"],
           ["Total Budget Requests",                      String(summary.totalRequests)],
           ["Approved / Pending / Rejected",              `${summary.approvedRequests} / ${summary.pendingRequests} / ${summary.rejectedRequests}`],
@@ -423,7 +423,7 @@ body { font-family:Georgia,'Times New Roman',serif; background:#eef1f5; color:#1
       </tbody>
     </table>
     <p style="font-size:10px;color:#6b7280;margin-top:6px;">
-      Note: "Effective Booked" = actualExpenditure where DA has entered it; original booked amount otherwise. This ensures booked ≤ released.
+      Note: "Effective Booked" = actualExpenditure where DA has entered it; original booked amount otherwise. This ensures booked â‰¤ released.
     </p>
 
     <!-- S3: FUND RELEASE HISTORY -->
@@ -432,7 +432,7 @@ body { font-family:Georgia,'Times New Roman',serif; background:#eef1f5; color:#1
 
     <!-- S4: RELEASE-WISE BOOKING & EXPENDITURE -->
     ${secHead("4", `Release-wise Booking & Expenditure Register`)}
-    <p style="font-size:11px;color:#6b7280;margin-bottom:12px;">Each booking is grouped under the release that was active when it was submitted. Booked ≤ Released for each release.</p>
+    <p style="font-size:11px;color:#6b7280;margin-bottom:12px;">Each booking is grouped under the release that was active when it was submitted. Booked â‰¤ Released for each release.</p>
     ${releaseGroupsHTML(releaseGroups)}
 
     <!-- S5: HEAD-WISE SUMMARY -->
@@ -492,12 +492,12 @@ async function downloadPDF() {
       startY:y, margin:{left:M,right:M},
       body:[
         ["GP Number","${esc(p.gpNumber)}"],["Project Name","${esc(p.projectName)}"],
-        ["Principal Investigator","${esc(p.piName)}"],["Email","${esc(p.piEmail||"—")}"],
-        ["Department","${esc(p.department)}"],["Funding Agency","${esc(p.projectAgencyName||"—")}"],
-        ["Scheme","${esc(p.nameOfScheme||"—")}"],["Sanction Order","${esc(p.sanctionOrderNo||"—")}"],
-        ["Bank","${esc(p.bankDetails||"Canara Bank")}"],["Start Date","${esc(p.projectStartDate||"—")}"],
-        ["End Date","${esc(p.projectEndDate||"—")}${p.hasExtension?" (EXTENDED)":""}"],
-        ["Original End Date","${esc(p.originalEndDate||"—")}"],
+        ["Principal Investigator","${esc(p.piName)}"],["Email","${esc(p.piEmail||"â€”")}"],
+        ["Department","${esc(p.department)}"],["Funding Agency","${esc(p.projectAgencyName||"â€”")}"],
+        ["Scheme","${esc(p.nameOfScheme||"â€”")}"],["Sanction Order","${esc(p.sanctionOrderNo||"â€”")}"],
+        ["Bank","${esc(p.bankDetails||"Canara Bank")}"],["Start Date","${esc(p.projectStartDate||"â€”")}"],
+        ["End Date","${esc(p.projectEndDate||"â€”")}${p.hasExtension?" (EXTENDED)":""}"],
+        ["Original End Date","${esc(p.originalEndDate||"â€”")}"],
         ["Duration","${esc(p.totalYears+" Year(s)")}"],["Status","${esc(statusLabel(p.status))}"],
       ],
       theme:"grid", styles:{fontSize:8,cellPadding:2.5},
@@ -533,13 +533,13 @@ async function downloadPDF() {
     // 3. Release history
     sec("3.", "FUND RELEASE HISTORY");
     const relRows = ${JSON.stringify((releaseHistory||[]).map((r,i)=>[
-      i+1, r.releaseNumber||"—", r.letterNumber||"—",
-      r.letterDate||"—", INR(r.totalReleased), r.releasedBy||"—", r.releasedAt||"—"
+      i+1, r.releaseNumber||"â€”", r.letterNumber||"â€”",
+      r.letterDate||"â€”", INR(r.totalReleased), r.releasedBy||"â€”", r.releasedAt||"â€”"
     ]))};
     doc.autoTable({
       startY:y, margin:{left:M,right:M},
       head:[["#","Release No.","Letter No.","Letter Date","Amount Released","Released By","Date & Time"]],
-      body: relRows.length ? relRows : [["—","No releases","","","","",""]],
+      body: relRows.length ? relRows : [["â€”","No releases","","","","",""]],
       theme:"grid",
       headStyles:{fillColor:[26,58,92],textColor:255,fontSize:7.5},
       styles:{fontSize:7.5,cellPadding:2},
@@ -553,13 +553,13 @@ async function downloadPDF() {
     const grpRows = ${JSON.stringify((releaseGroups||[]).flatMap((grp,gi)=>
       (grp.heads||[]).flatMap(h=>
         (h.requests||[]).map((req,ri)=>[
-          `R${gi+1} — ${grp.releaseNumber}`,
+          `R${gi+1} â€” ${grp.releaseNumber}`,
           h.headName,
-          req.requestNumber||"—",
-          req.purpose||"—",
+          req.requestNumber||"â€”",
+          req.purpose||"â€”",
           INR(req.amount),
           req.expenditureFilled ? INR(req.actualExpenditure) : "Pending",
-          req.actualEnteredAt||"—",
+          req.actualEnteredAt||"â€”",
           statusLabel(req.status),
         ])
       )
@@ -567,7 +567,7 @@ async function downloadPDF() {
     doc.autoTable({
       startY:y, margin:{left:M,right:M},
       head:[["Release","Head","Ref. No.","Purpose","Booked","Actual (DA)","DA Entered On","Status"]],
-      body: grpRows.length ? grpRows : [["—","No approved bookings","","","","","",""]],
+      body: grpRows.length ? grpRows : [["â€”","No approved bookings","","","","","",""]],
       theme:"grid",
       headStyles:{fillColor:[26,58,92],textColor:255,fontSize:7},
       styles:{fontSize:7,cellPadding:2},
@@ -604,7 +604,7 @@ async function downloadPDF() {
       doc.setPage(pg);
       doc.setFontSize(7); doc.setFont("helvetica","normal"); doc.setTextColor(100,116,139);
       doc.text("Page "+pg+" of "+total, W-M, 290, {align:"right"});
-      doc.text("${esc(p.gpNumber)} — Confidential", M, 290);
+      doc.text("${esc(p.gpNumber)} â€” Confidential", M, 290);
     }
     doc.save("Report_${esc(p.gpNumber.replace(/\//g,"-"))}.pdf");
   } catch(e) { alert("PDF failed: "+e.message); }
@@ -621,7 +621,7 @@ function loadScript(src) {
 </html>`;
 };
 
-/* ─── Public API ─────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export const openProjectReport = async (project) => {
   const win = window.open("","_blank","width=1200,height=900,scrollbars=yes,resizable=yes");
   if (!win) { alert("Popup blocked. Please allow popups for this site."); return; }
@@ -636,14 +636,14 @@ export const openProjectReport = async (project) => {
   win.document.close();
 
   try {
-    const res  = await fetch(`https://ifms-backend-nitj.onrender.com/api/get-project-report.php?projectId=${project.id}`);
+    const res  = await fetch(`http://localhost:8000/api/get-project-report.php?projectId=${project.id}`);
     const json = await res.json();
     if (!json.success) throw new Error(json.message || "Server error");
     const html = buildReportHTML(json.data);
     win.document.open();
     win.document.write(html);
     win.document.close();
-    win.document.title = `Report — ${json.data.project.gpNumber}`;
+    win.document.title = `Report â€” ${json.data.project.gpNumber}`;
   } catch (err) {
     win.document.open();
     win.document.write(`<!DOCTYPE html><html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Georgia;flex-direction:column;gap:12px;">

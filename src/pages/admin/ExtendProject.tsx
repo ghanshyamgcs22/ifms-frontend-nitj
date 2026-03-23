@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -56,7 +56,7 @@ const ExtendProject = ({ open, onClose, project, onSuccess }: ExtendProjectProps
   }, [extendedEndDate, project.projectEndDate]);
 
   const formatDateDisplay = (dateString: string) => {
-    if (!dateString) return "—";
+    if (!dateString) return "â€”";
     try {
       return format(new Date(dateString), "PPP");
     } catch {
@@ -119,9 +119,9 @@ const ExtendProject = ({ open, onClose, project, onSuccess }: ExtendProjectProps
         formData.append("extensionPdf", selectedFile);
       }
 
-      const response = await fetch("https://ifms-backend-nitj.onrender.com/api/extend-project.php", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/extend-project.php`, {
         method: "POST",
-        body: formData, // no Content-Type header — browser sets multipart boundary automatically
+        body: formData, // no Content-Type header â€” browser sets multipart boundary automatically
       });
 
       const result = await response.json();
@@ -175,7 +175,7 @@ const ExtendProject = ({ open, onClose, project, onSuccess }: ExtendProjectProps
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Extended To:</span>
                   <span className="text-sm font-semibold text-gray-900">
-                    {extendedEndDate ? format(extendedEndDate, "PPP") : "—"}
+                    {extendedEndDate ? format(extendedEndDate, "PPP") : "â€”"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -185,7 +185,7 @@ const ExtendProject = ({ open, onClose, project, onSuccess }: ExtendProjectProps
                 {selectedFile && (
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Extension PDF:</span>
-                    <span className="text-sm font-semibold text-gray-900">Uploaded ✓</span>
+                    <span className="text-sm font-semibold text-gray-900">Uploaded âœ“</span>
                   </div>
                 )}
               </div>
@@ -237,7 +237,7 @@ const ExtendProject = ({ open, onClose, project, onSuccess }: ExtendProjectProps
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Original Duration</Label>
                 <div className="p-3 bg-gray-100 rounded-md border border-gray-200">
-                  <p className="text-sm text-gray-900">{project.totalYears ? `${project.totalYears} years` : "—"}</p>
+                  <p className="text-sm text-gray-900">{project.totalYears ? `${project.totalYears} years` : "â€”"}</p>
                 </div>
               </div>
 
@@ -289,7 +289,7 @@ const ExtendProject = ({ open, onClose, project, onSuccess }: ExtendProjectProps
                 </div>
               )}
 
-              {/* ── PDF Upload ── */}
+              {/* â”€â”€ PDF Upload â”€â”€ */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">
                   Extension Letter / Supporting PDF
@@ -297,7 +297,7 @@ const ExtendProject = ({ open, onClose, project, onSuccess }: ExtendProjectProps
                 </Label>
 
                 {selectedFile ? (
-                  /* File selected — preview card */
+                  /* File selected â€” preview card */
                   <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div className="flex-shrink-0 bg-green-100 p-2 rounded-md">
                       <FileText className="h-5 w-5 text-green-600" />
@@ -333,7 +333,7 @@ const ExtendProject = ({ open, onClose, project, onSuccess }: ExtendProjectProps
                       <p className="text-sm font-medium text-gray-700">
                         Drag & drop a PDF, or <span className="text-blue-600 underline">browse</span>
                       </p>
-                      <p className="text-xs text-gray-500 mt-0.5">PDF only · Max 10 MB</p>
+                      <p className="text-xs text-gray-500 mt-0.5">PDF only Â· Max 10 MB</p>
                     </div>
                   </div>
                 )}

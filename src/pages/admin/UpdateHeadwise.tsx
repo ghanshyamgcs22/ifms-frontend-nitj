@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -76,7 +76,7 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
       setLoading(true);
       
       const response = await fetch(
-        `https://ifms-backend-nitj.onrender.com/api/fund-allocations.php?projectId=${project.id}`
+        `http://localhost:8000/api/fund-allocations.php?projectId=${project.id}`
       );
       const data = await response.json();
 
@@ -100,7 +100,7 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
       } else {
         // Fallback to project.heads
         const projectResponse = await fetch(
-          `https://ifms-backend-nitj.onrender.com/api/projects.php?id=${project.id}`
+          `http://localhost:8000/api/projects.php?id=${project.id}`
         );
         const projectData = await projectResponse.json();
         
@@ -200,9 +200,9 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
 
       if (Math.abs(newTotalSanctioned - FIXED_TOTAL_SANCTIONED) > 0.01) {
         alert(
-          `Head-wise sanctioned amounts must sum to ₹${FIXED_TOTAL_SANCTIONED.toLocaleString("en-IN")}\n\n` +
-          `Current sum: ₹${newTotalSanctioned.toLocaleString("en-IN")}\n` +
-          `Difference: ₹${Math.abs(newTotalSanctioned - FIXED_TOTAL_SANCTIONED).toLocaleString("en-IN")}`
+          `Head-wise sanctioned amounts must sum to â‚¹${FIXED_TOTAL_SANCTIONED.toLocaleString("en-IN")}\n\n` +
+          `Current sum: â‚¹${newTotalSanctioned.toLocaleString("en-IN")}\n` +
+          `Difference: â‚¹${Math.abs(newTotalSanctioned - FIXED_TOTAL_SANCTIONED).toLocaleString("en-IN")}`
         );
         return;
       }
@@ -211,8 +211,8 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
       if (editSanctioned < allocation.currentReleased) {
         alert(
           `Cannot reduce sanctioned amount below already released amount\n\n` +
-          `Already released: ₹${allocation.currentReleased.toLocaleString("en-IN")}\n` +
-          `Minimum sanctioned: ₹${allocation.currentReleased.toLocaleString("en-IN")}`
+          `Already released: â‚¹${allocation.currentReleased.toLocaleString("en-IN")}\n` +
+          `Minimum sanctioned: â‚¹${allocation.currentReleased.toLocaleString("en-IN")}`
         );
         return;
       }
@@ -225,8 +225,8 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
       if (editReleased > sanctionedForThisHead) {
         alert(
           `Released amount cannot exceed sanctioned amount for this head\n\n` +
-          `Sanctioned: ₹${sanctionedForThisHead.toLocaleString("en-IN")}\n` +
-          `Attempted released: ₹${editReleased.toLocaleString("en-IN")}\n\n` +
+          `Sanctioned: â‚¹${sanctionedForThisHead.toLocaleString("en-IN")}\n` +
+          `Attempted released: â‚¹${editReleased.toLocaleString("en-IN")}\n\n` +
           `To release more, first increase the sanctioned amount for this head`
         );
         return;
@@ -243,8 +243,8 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
       if (newTotalReleased > FIXED_TOTAL_RELEASED) {
         alert(
           `Total released cannot exceed project's total released amount\n\n` +
-          `Project total released: ₹${FIXED_TOTAL_RELEASED.toLocaleString("en-IN")}\n` +
-          `Attempted total: ₹${newTotalReleased.toLocaleString("en-IN")}`
+          `Project total released: â‚¹${FIXED_TOTAL_RELEASED.toLocaleString("en-IN")}\n` +
+          `Attempted total: â‚¹${newTotalReleased.toLocaleString("en-IN")}`
         );
         return;
       }
@@ -308,8 +308,8 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
     if (Math.abs(totalSanctioned - FIXED_TOTAL_SANCTIONED) > 0.01) {
       alert(
         `Head-wise sanctioned amounts must equal project total\n\n` +
-        `Expected: ₹${FIXED_TOTAL_SANCTIONED.toLocaleString("en-IN")}\n` +
-        `Current: ₹${totalSanctioned.toLocaleString("en-IN")}`
+        `Expected: â‚¹${FIXED_TOTAL_SANCTIONED.toLocaleString("en-IN")}\n` +
+        `Current: â‚¹${totalSanctioned.toLocaleString("en-IN")}`
       );
       return;
     }
@@ -317,8 +317,8 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
     if (totalReleased > FIXED_TOTAL_RELEASED) {
       alert(
         `Total released cannot exceed project's total released\n\n` +
-        `Maximum: ₹${FIXED_TOTAL_RELEASED.toLocaleString("en-IN")}\n` +
-        `Current: ₹${totalReleased.toLocaleString("en-IN")}`
+        `Maximum: â‚¹${FIXED_TOTAL_RELEASED.toLocaleString("en-IN")}\n` +
+        `Current: â‚¹${totalReleased.toLocaleString("en-IN")}`
       );
       return;
     }
@@ -335,7 +335,7 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
         releasedAmount: parseFloat(alloc.editReleased),
       }));
 
-      const response = await fetch("https://ifms-backend-nitj.onrender.com/api/update-project-allocations.php", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/update-project-allocations.php`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -435,7 +435,7 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
                   <div>
                     <p className="text-xs text-gray-600 font-medium">Fixed Total Sanctioned</p>
                     <p className="text-lg font-bold text-purple-900">
-                      ₹{FIXED_TOTAL_SANCTIONED.toLocaleString("en-IN")}
+                      â‚¹{FIXED_TOTAL_SANCTIONED.toLocaleString("en-IN")}
                     </p>
                   </div>
                 </div>
@@ -447,7 +447,7 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
                   <div>
                     <p className="text-xs text-gray-600 font-medium">Fixed Total Released</p>
                     <p className="text-lg font-bold text-pink-600">
-                      ₹{FIXED_TOTAL_RELEASED.toLocaleString("en-IN")}
+                      â‚¹{FIXED_TOTAL_RELEASED.toLocaleString("en-IN")}
                     </p>
                   </div>
                 </div>
@@ -459,7 +459,7 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
                   <div>
                     <p className="text-xs text-gray-600 font-medium">Fixed Remaining</p>
                     <p className="text-lg font-bold text-green-600">
-                      ₹{(FIXED_TOTAL_SANCTIONED - FIXED_TOTAL_RELEASED).toLocaleString("en-IN")}
+                      â‚¹{(FIXED_TOTAL_SANCTIONED - FIXED_TOTAL_RELEASED).toLocaleString("en-IN")}
                     </p>
                   </div>
                 </div>
@@ -478,11 +478,11 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
                         ? 'text-green-600'
                         : 'text-red-600'
                     }`}>
-                      ₹{getCurrentTotalSanctioned().toLocaleString("en-IN")}
+                      â‚¹{getCurrentTotalSanctioned().toLocaleString("en-IN")}
                     </p>
                     {Math.abs(getCurrentTotalSanctioned() - FIXED_TOTAL_SANCTIONED) >= 0.01 && (
                       <p className="text-xs text-red-600">
-                        Diff: ₹{Math.abs(getCurrentTotalSanctioned() - FIXED_TOTAL_SANCTIONED).toLocaleString("en-IN")}
+                        Diff: â‚¹{Math.abs(getCurrentTotalSanctioned() - FIXED_TOTAL_SANCTIONED).toLocaleString("en-IN")}
                       </p>
                     )}
                   </div>
@@ -499,11 +499,11 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
                         ? 'text-green-600'
                         : 'text-red-600'
                     }`}>
-                      ₹{getCurrentTotalReleased().toLocaleString("en-IN")}
+                      â‚¹{getCurrentTotalReleased().toLocaleString("en-IN")}
                     </p>
                     {getCurrentTotalReleased() > FIXED_TOTAL_RELEASED && (
                       <p className="text-xs text-red-600">
-                        Exceeds by: ₹{(getCurrentTotalReleased() - FIXED_TOTAL_RELEASED).toLocaleString("en-IN")}
+                        Exceeds by: â‚¹{(getCurrentTotalReleased() - FIXED_TOTAL_RELEASED).toLocaleString("en-IN")}
                       </p>
                     )}
                   </div>
@@ -516,7 +516,7 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
                   <div>
                     <p className="text-xs text-gray-600 font-medium">Current Edit: Remaining</p>
                     <p className="text-lg font-bold text-green-600">
-                      ₹{(getCurrentTotalSanctioned() - getCurrentTotalReleased()).toLocaleString("en-IN")}
+                      â‚¹{(getCurrentTotalSanctioned() - getCurrentTotalReleased()).toLocaleString("en-IN")}
                     </p>
                   </div>
                 </div>
@@ -529,10 +529,10 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
                   <div className="text-sm text-amber-900 space-y-2">
                     <p className="font-medium">Important Rules:</p>
                     <ul className="list-disc list-inside space-y-1 text-xs">
-                      <li>Total project sanctioned (₹{FIXED_TOTAL_SANCTIONED.toLocaleString("en-IN")}) cannot change</li>
-                      <li>You can redistribute sanctioned amounts across heads (must sum to ₹{FIXED_TOTAL_SANCTIONED.toLocaleString("en-IN")})</li>
+                      <li>Total project sanctioned (â‚¹{FIXED_TOTAL_SANCTIONED.toLocaleString("en-IN")}) cannot change</li>
+                      <li>You can redistribute sanctioned amounts across heads (must sum to â‚¹{FIXED_TOTAL_SANCTIONED.toLocaleString("en-IN")})</li>
                       <li>Released amount per head cannot exceed that head's sanctioned amount</li>
-                      <li>Total released cannot exceed ₹{FIXED_TOTAL_RELEASED.toLocaleString("en-IN")}</li>
+                      <li>Total released cannot exceed â‚¹{FIXED_TOTAL_RELEASED.toLocaleString("en-IN")}</li>
                       <li>Click "Edit Sanctioned" or "Edit Released" to modify, then "Confirm" to save</li>
                     </ul>
                   </div>
@@ -561,13 +561,13 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
                               Current DB Values
                             </th>
                             <th className="text-right text-xs font-semibold text-gray-700 px-4 py-3 min-w-[150px]">
-                              Sanctioned (₹)
+                              Sanctioned (â‚¹)
                             </th>
                             <th className="text-right text-xs font-semibold text-gray-700 px-4 py-3 min-w-[150px]">
-                              Released (₹)
+                              Released (â‚¹)
                             </th>
                             <th className="text-right text-xs font-semibold text-gray-700 px-4 py-3">
-                              Remaining (₹)
+                              Remaining (â‚¹)
                             </th>
                             <th className="text-center text-xs font-semibold text-gray-700 px-4 py-3">Status</th>
                             <th className="text-center text-xs font-semibold text-gray-700 px-4 py-3 min-w-[200px]">Actions</th>
@@ -606,11 +606,11 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
                                   <div className="text-xs text-gray-600 space-y-1">
                                     <div className="flex items-center gap-1">
                                       <Lock className="h-3 w-3" />
-                                      <span>S: ₹{allocation.currentSanctioned.toLocaleString("en-IN")}</span>
+                                      <span>S: â‚¹{allocation.currentSanctioned.toLocaleString("en-IN")}</span>
                                     </div>
                                     <div className="flex items-center gap-1">
                                       <Lock className="h-3 w-3" />
-                                      <span>R: ₹{allocation.currentReleased.toLocaleString("en-IN")}</span>
+                                      <span>R: â‚¹{allocation.currentReleased.toLocaleString("en-IN")}</span>
                                     </div>
                                   </div>
                                 </td>
@@ -665,7 +665,7 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
                                 <td className="px-4 py-3 text-center">
                                   {allocation.isConfirmed ? (
                                     <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
-                                      ✓ Confirmed
+                                      âœ“ Confirmed
                                     </Badge>
                                   ) : (
                                     <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs">

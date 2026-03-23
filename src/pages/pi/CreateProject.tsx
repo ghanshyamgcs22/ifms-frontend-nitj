@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ const CreateProject = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [loadingGP, setLoadingGP] = useState(false);
-  
+const [coPILists, setCoPILists] = useState({});
   const [formData, setFormData] = useState({
     gpNumber: "",
     modeOfProject: "",
@@ -63,8 +63,13 @@ const CreateProject = () => {
     totalYears: "",
     totalSanctionedAmount: "",
     sanctionedLetterFile: null,
+    
   });
-
+const [piList, setPiList] = useState([]);
+const [addCoPI, setAddCoPI] = useState(false);
+const [coPIs, setCoPIs] = useState([
+  { department: "", name: "" }
+]);
   useEffect(() => {
     fetchNextGPNumber();
     fetchProjectHeads();
@@ -73,9 +78,9 @@ const CreateProject = () => {
   const fetchNextGPNumber = async () => {
     try {
       setLoadingGP(true);
-      const response = await fetch("https://ifms-backend-nitj.onrender.com/api/get-next-gp-number.php");
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/get-next-gp-number.php`);
       const data = await response.json();
-      
+
       if (data.success) {
         setNextGPNumber(data.data.gpNumber);
         setGpNumberInfo(data.data);
@@ -92,11 +97,36 @@ const CreateProject = () => {
     }
   };
 
+  const fetchPIsByDepartment = async (department, index) => {
+  try {
+    const res = await fetch(
+      `[localhost](http://localhost:8000/api/get-pi.php?department=${encodeURIComponent(department)})`
+    );
+    const data = await res.json();
+    if (data.success) {
+      setCoPILists(prev => ({ ...prev, [index]: data.data }));
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+useEffect(() => {
+  if (formData.department) {
+    fetch(`http://localhost:8000/api/get-pi.php?department=${formData.department}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setPiList(data.data);
+      })
+      .catch(err => console.error(err));
+  }
+}, [formData.department]);
+
+
   const fetchProjectHeads = async () => {
     try {
-      const response = await fetch("https://ifms-backend-nitj.onrender.com/api/project-heads.php");
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/project-heads.php`);
       const data = await response.json();
-      
+
       if (data.success) {
         setProjectHeads(data.data);
       } else {
@@ -117,7 +147,7 @@ const CreateProject = () => {
     }
   }, [startDate, endDate]);
 
-  const filteredHeads = projectHeads.filter(head => 
+  const filteredHeads = projectHeads.filter(head =>
     headType === "all" ? true : head.type === headType
   );
 
@@ -127,8 +157,16 @@ const CreateProject = () => {
   };
 
   const handleSelectChange = (name, value) => {
+  if (name === "department") {
+    setFormData(prev => ({
+      ...prev,
+      department: value,
+      piName: ""   // reset PI
+    }));
+  } else {
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  }
+};
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -138,13 +176,13 @@ const CreateProject = () => {
         e.target.value = '';
         return;
       }
-      
+
       if (file.size > 10 * 1024 * 1024) {
         alert('File size must be less than 10MB');
         e.target.value = '';
         return;
       }
-      
+
       setFormData(prev => ({ ...prev, sanctionedLetterFile: file }));
       setUploadedFile({
         name: file.name,
@@ -181,7 +219,7 @@ const CreateProject = () => {
       alert("Please enter a valid amount");
       return;
     }
-    
+
     setAllocations(prev =>
       prev.map(alloc =>
         alloc.id === id ? { ...alloc, isConfirmed: true } : alloc
@@ -245,9 +283,9 @@ const CreateProject = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.modeOfProject || !formData.projectName || !formData.piName || 
-        !formData.department || !formData.totalSanctionedAmount) {
+
+    if (!formData.modeOfProject || !formData.projectName || !formData.piName ||
+      !formData.department || !formData.totalSanctionedAmount) {
       alert("Please fill all required fields");
       return;
     }
@@ -276,6 +314,7 @@ const CreateProject = () => {
       }
     }
 
+
     try {
       setUploadProgress(true);
 
@@ -301,7 +340,7 @@ const CreateProject = () => {
 
       delete projectData.sanctionedLetterFile;
 
-      const response = await fetch("https://ifms-backend-nitj.onrender.com/api/projects.php", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/projects.php`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -326,7 +365,7 @@ const CreateProject = () => {
         formDataFile.append('fileType', 'sanction_letter');
         formDataFile.append('uploadedBy', 'admin_user');
 
-        const fileResponse = await fetch("https://ifms-backend-nitj.onrender.com/api/upload-file.php", {
+        const fileResponse = await fetch(`${import.meta.env.VITE_API_URL}/upload-file.php`, {
           method: "POST",
           body: formDataFile,
         });
@@ -341,7 +380,7 @@ const CreateProject = () => {
 
       alert(`Project created successfully! GP Number: ${gpNumber}`);
       navigate("/admin/projects");
-      
+
     } catch (error) {
       console.error("Error creating project:", error);
       alert("Error creating project: " + error.message);
@@ -377,7 +416,7 @@ const CreateProject = () => {
                     <div className="flex-1 relative">
                       <Input
                         value={formData.gpNumber}
-                        onChange={(e) => handleInputChange({ target: { name: 'gpNumber', value: e.target.value }})}
+                        onChange={(e) => handleInputChange({ target: { name: 'gpNumber', value: e.target.value } })}
                         disabled={!isEditingGP}
                         className={`border-gray-300 ${!isEditingGP ? 'bg-gray-100' : 'focus:border-blue-500 focus:ring-blue-500'}`}
                       />
@@ -503,25 +542,51 @@ const CreateProject = () => {
                   className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
-
+              {/* Department */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">
+                  Department <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={formData.department}
+                  onValueChange={(value) => handleSelectChange("department", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Computer Science">Computer Science</SelectItem>
+                    <SelectItem value="Electrical Engineering">Electrical Engineering</SelectItem>
+                    <SelectItem value="Mechanical Engineering">Mechanical Engineering</SelectItem>
+                    <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               {/* PI Name */}
               <div className="space-y-2">
-                <Label htmlFor="piName" className="text-sm font-medium text-gray-700">
-                  Principal Investigator Name <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="piName"
-                  name="piName"
-                  placeholder="Enter PI Name"
-                  value={formData.piName}
-                  onChange={handleInputChange}
-                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  required
-                />
-              </div>
+  <Label className="text-sm font-medium text-gray-700">
+    Principal Investigator <span className="text-red-500">*</span>
+  </Label>
+
+  <Select
+    value={formData.piName}
+    onValueChange={(value) => handleSelectChange("piName", value)}
+  >
+    <SelectTrigger>
+      <SelectValue placeholder="Select PI" />
+    </SelectTrigger>
+    <SelectContent>
+      {piList.map((pi, index) => (
+        <SelectItem key={index} value={pi.name}>
+          {pi.name}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+</div>
 
               {/* PI Email */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="piEmail" className="text-sm font-medium text-gray-700">
                   Principal Investigator Email
                 </Label>
@@ -534,32 +599,87 @@ const CreateProject = () => {
                   onChange={handleInputChange}
                   className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
-              </div>
+              </div> */}
 
-              {/* Department */}
-              <div className="space-y-2">
-                <Label htmlFor="department" className="text-sm font-medium text-gray-700">
-                  Department <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={formData.department}
-                  onValueChange={(value) => handleSelectChange("department", value)}
-                >
-                  <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                    <SelectValue placeholder="Select Department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Computer Science">Computer Science</SelectItem>
-                    <SelectItem value="Electrical Engineering">Electrical Engineering</SelectItem>
-                    <SelectItem value="Mechanical Engineering">Mechanical Engineering</SelectItem>
-                    <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
-                    <SelectItem value="Physics">Physics</SelectItem>
-                    <SelectItem value="Chemistry">Chemistry</SelectItem>
-                    <SelectItem value="Mathematics">Mathematics</SelectItem>
-                    <SelectItem value="Biotechnology">Biotechnology</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+{/* Add Co-PI Toggle */}
+<div className="space-y-2">
+  <Label>Add Co-PI?</Label>
+  <Select onValueChange={(val) => setAddCoPI(val === "yes")}>
+    <SelectTrigger className="w-40">
+      <SelectValue placeholder="No" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="no">No</SelectItem>
+      <SelectItem value="yes">Yes</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
+
+{/* Co-PI Section */}
+{addCoPI && (
+  <div className="space-y-4 border p-4 rounded-lg bg-gray-50">
+    <Label className="font-semibold">Co-Principal Investigators</Label>
+
+    {coPIs.map((copi, index) => (
+      <div key={index} className="grid grid-cols-2 gap-4">
+
+        {/* Co-PI Department */}
+        <Select
+          value={copi.department}
+          onValueChange={(value) => {
+            const updated = [...coPIs];
+            updated[index].department = value;
+            updated[index].name = "";
+            setCoPIs(updated);
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select Department" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Computer Science">Computer Science</SelectItem>
+            <SelectItem value="Electrical Engineering">Electrical Engineering</SelectItem>
+            <SelectItem value="Mechanical Engineering">Mechanical Engineering</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Co-PI Name */}
+        <Select
+          value={copi.name}
+          onValueChange={(value) => {
+            const updated = [...coPIs];
+            updated[index].name = value;
+            setCoPIs(updated);
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select Co-PI" />
+          </SelectTrigger>
+          <SelectContent>
+            {piList.map((pi, i) => (
+              <SelectItem key={i} value={pi.name}>
+                {pi.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+      </div>
+    ))}
+
+    {/* Add More */}
+    <Button
+      type="button"
+      onClick={() =>
+        setCoPIs([...coPIs, { department: "", name: "" }])
+      }
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      Add More Co-PI
+    </Button>
+  </div>
+)}
+
 
               {/* Name of the Scheme */}
               <div className="space-y-2">
@@ -731,7 +851,7 @@ const CreateProject = () => {
                   <div>
                     <p className="text-xs text-gray-600 font-medium">Total Sanctioned</p>
                     <p className="text-lg font-bold text-gray-900">
-                      ₹{parseFloat(formData.totalSanctionedAmount || 0).toLocaleString("en-IN")}
+                      â‚¹{parseFloat(formData.totalSanctionedAmount || "0").toLocaleString("en-IN")}
                     </p>
                   </div>
                 </div>
@@ -743,7 +863,7 @@ const CreateProject = () => {
                   <div>
                     <p className="text-xs text-gray-600 font-medium">Allocated</p>
                     <p className="text-lg font-bold text-green-600">
-                      ₹{calculateTotalAllocated().toLocaleString("en-IN")}
+                      â‚¹{calculateTotalAllocated().toLocaleString("en-IN")}
                     </p>
                   </div>
                 </div>
@@ -755,7 +875,7 @@ const CreateProject = () => {
                   <div>
                     <p className="text-xs text-gray-600 font-medium">Remaining</p>
                     <p className={`text-lg font-bold ${getRemainingBudget() < 0 ? 'text-red-600' : 'text-yellow-600'}`}>
-                      ₹{getRemainingBudget().toLocaleString("en-IN")}
+                      â‚¹{getRemainingBudget().toLocaleString("en-IN")}
                     </p>
                   </div>
                 </div>
@@ -814,16 +934,15 @@ const CreateProject = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <p className="font-medium text-gray-900">{allocation.headName}</p>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                            allocation.headType === "recurring" 
-                              ? "bg-blue-100 text-blue-700" 
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${allocation.headType === "recurring"
+                              ? "bg-blue-100 text-blue-700"
                               : "bg-gray-100 text-gray-700"
-                          }`}>
+                            }`}>
                             {allocation.headType}
                           </span>
                           {allocation.isConfirmed && (
                             <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">
-                              ✓ Confirmed
+                              âœ“ Confirmed
                             </span>
                           )}
                         </div>
@@ -833,11 +952,10 @@ const CreateProject = () => {
                           value={allocation.sanctionedAmount}
                           onChange={(e) => updateAllocation(allocation.id, e.target.value)}
                           disabled={allocation.isConfirmed && editingAllocationId !== allocation.id}
-                          className={`border-gray-300 ${
-                            allocation.isConfirmed && editingAllocationId !== allocation.id 
-                              ? 'bg-gray-100' 
+                          className={`border-gray-300 ${allocation.isConfirmed && editingAllocationId !== allocation.id
+                              ? 'bg-gray-100'
                               : 'focus:border-blue-500 focus:ring-blue-500'
-                          }`}
+                            }`}
                         />
                       </div>
                       <div className="flex items-center gap-2">
@@ -917,8 +1035,8 @@ const CreateProject = () => {
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={uploadProgress}
               className="bg-green-600 hover:bg-green-700 text-white font-medium shadow-sm"
             >
@@ -942,3 +1060,5 @@ const CreateProject = () => {
 };
 
 export default CreateProject;
+
+

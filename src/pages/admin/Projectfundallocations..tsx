@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ const ProjectFundAllocations = () => {
     try {
       setLoading(true);
       // Fetch project details
-      const projectResponse = await fetch(`https://ifms-backend-nitj.onrender.com/api/projects.php?id=${projectId}`);
+      const projectResponse = await fetch(`http://localhost:8000/api/projects.php?id=${projectId}`);
       const projectData = await projectResponse.json();
       
       if (projectData.success) {
@@ -50,7 +50,7 @@ const ProjectFundAllocations = () => {
       }
 
       // Fetch allocations
-      const allocationsResponse = await fetch(`https://ifms-backend-nitj.onrender.com/api/fund-allocations.php?projectId=${projectId}`);
+      const allocationsResponse = await fetch(`http://localhost:8000/api/fund-allocations.php?projectId=${projectId}`);
       const allocationsData = await allocationsResponse.json();
       
       if (allocationsData.success) {
@@ -76,7 +76,7 @@ const ProjectFundAllocations = () => {
   const confirmDelete = async () => {
     try {
       const response = await fetch(
-        `https://ifms-backend-nitj.onrender.com/api/fund-allocations.php?id=${deletingId}`,
+        `http://localhost:8000/api/fund-allocations.php?id=${deletingId}`,
         {
           method: "DELETE",
         }
@@ -100,7 +100,7 @@ const ProjectFundAllocations = () => {
   const saveEdit = async () => {
     try {
       const response = await fetch(
-        `https://ifms-backend-nitj.onrender.com/api/fund-allocations.php?id=${editingAllocation.id}`,
+        `http://localhost:8000/api/fund-allocations.php?id=${editingAllocation.id}`,
         {
           method: "PUT",
           headers: {
@@ -177,7 +177,7 @@ const ProjectFundAllocations = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                ₹{parseFloat(project?.proposedBudget || 0).toLocaleString("en-IN")}
+                â‚¹{parseFloat(project?.proposedBudget || 0).toLocaleString("en-IN")}
               </div>
             </CardContent>
           </Card>
@@ -188,7 +188,7 @@ const ProjectFundAllocations = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-success">
-                ₹{totals.sanctioned.toLocaleString("en-IN")}
+                â‚¹{totals.sanctioned.toLocaleString("en-IN")}
               </div>
             </CardContent>
           </Card>
@@ -199,7 +199,7 @@ const ProjectFundAllocations = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">
-                ₹{totals.released.toLocaleString("en-IN")}
+                â‚¹{totals.released.toLocaleString("en-IN")}
               </div>
             </CardContent>
           </Card>
@@ -210,7 +210,7 @@ const ProjectFundAllocations = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-warning">
-                ₹{(parseFloat(project?.proposedBudget || 0) - totals.sanctioned).toLocaleString("en-IN")}
+                â‚¹{(parseFloat(project?.proposedBudget || 0) - totals.sanctioned).toLocaleString("en-IN")}
               </div>
             </CardContent>
           </Card>
@@ -298,7 +298,7 @@ const ProjectFundAllocations = () => {
                         </TableCell>
                         <TableCell>{allocation.timePeriod}</TableCell>
                         <TableCell className="font-semibold">
-                          ₹{parseFloat(allocation.sanctionedAmount || 0).toLocaleString("en-IN")}
+                          â‚¹{parseFloat(allocation.sanctionedAmount || 0).toLocaleString("en-IN")}
                         </TableCell>
                         <TableCell>
                           <Button
@@ -360,7 +360,7 @@ const ProjectFundAllocations = () => {
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Sanctioned Amount (₹)</Label>
+                    <Label>Sanctioned Amount (â‚¹)</Label>
                     <Input
                       type="number"
                       value={editingAllocation.sanctionedAmount}
@@ -374,7 +374,7 @@ const ProjectFundAllocations = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Released Amount (₹)</Label>
+                    <Label>Released Amount (â‚¹)</Label>
                     <Input
                       type="number"
                       value={editingAllocation.releasedAmount}

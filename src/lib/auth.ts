@@ -1,61 +1,118 @@
-export type UserRole = "admin" | "pi" | "ar" | "dr" | "ao2" | "ao1" | "hod";
+// lib/auth.ts
+// Central auth — add new DRC chain users here
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
-  department?: string;
+  password: string;
+  role:
+    | "admin"
+    | "pi"
+    | "da"
+    | "ar"
+    | "dr"
+    | "drc_office"
+    | "drc_rc"
+    | "drc"
+    | "director";
 }
 
-export const mockUsers: User[] = [
+// ── All users ────────────────────────────────────────────────────────────────
+const USERS: User[] = [
+  // ── Existing ──
   {
     id: "1",
     name: "Admin User",
     email: "admin@ifms.edu",
+    password: "password123",
     role: "admin",
   },
   {
     id: "2",
-    name: "Dr. John Smith",
+    name: "Principal Investigator",
     email: "pi@ifms.edu",
+    password: "password123",
     role: "pi",
-    department: "Computer Science",
   },
   {
     id: "3",
-    name: "Assistant Registrar",
-    email: "ar@ifms.edu",
-    role: "ar",
+    name: "Dealing Assistant",
+    email: "da@ifms.edu",
+    password: "password123",
+    role: "da",
   },
   {
     id: "4",
-    name: "Deputy Registrar",
-    email: "dr@ifms.edu",
-    role: "dr",
+    name: "Assistant Registrar",
+    email: "ar@ifms.edu",
+    password: "password123",
+    role: "ar",
   },
   {
     id: "5",
-    name: "DA Officer",
-    email: "da@ifms.edu",
-    role: "da",
+    name: "Deputy Registrar",
+    email: "dr@ifms.edu",
+    password: "password123",
+    role: "dr",
+  },
+
+  // ── New: DRC chain (> ₹25k) ──
+  {
+    id: "6",
+    name: "DRC Office",
+    email: "drc.office@ifms.edu",
+    password: "password123",
+    role: "drc_office",
+  },
+  {
+    id: "7",
+    name: "DRC Research & Committee",
+    email: "drc.rc@ifms.edu",
+    password: "password123",
+    role: "drc_rc",
+  },
+  {
+    id: "8",
+    name: "DRC",
+    email: "drc@ifms.edu",
+    password: "password123",
+    role: "drc",
+  },
+  {
+    id: "9",
+    name: "Director",
+    email: "director@ifms.edu",
+    password: "password123",
+    role: "director",
   },
 ];
 
-export const login = (email: string, password: string): User | null => {
-  const user = mockUsers.find((u) => u.email === email);
-  if (user && password === "password123") {
-    localStorage.setItem("user", JSON.stringify(user));
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const SESSION_KEY = "ifms_user";
+
+export function login(email: string, password: string): User | null {
+  const user = USERS.find(
+    (u) =>
+      u.email.toLowerCase() === email.toLowerCase().trim() &&
+      u.password === password
+  );
+  if (user) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
     return user;
   }
   return null;
-};
+}
 
-export const logout = () => {
-  localStorage.removeItem("user");
-};
+export function logout(): void {
+  localStorage.removeItem(SESSION_KEY);
+}
 
-export const getCurrentUser = (): User | null => {
-  const userStr = localStorage.getItem("user");
-  return userStr ? JSON.parse(userStr) : null;
-};
+export function getCurrentUser(): User | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as User) : null;
+  } catch {
+    return null;
+  }
+}

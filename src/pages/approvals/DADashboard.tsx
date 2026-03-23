@@ -1,11 +1,4 @@
-// DADashboard.tsx
-// CHANGES:
-// 1. "Approve" → "Process" everywhere (widget title, buttons, toasts, dialogs)
-// 2. Expenditure widget: Confirm button locks the entry; Edit pencil unlocks for revision
-// 3. StageBadge "Your Turn" → "At DA" (formal)
-// 4. All stage labels updated to formal language
-
-import { Layout } from "@/components/Layout";
+﻿import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -19,7 +12,7 @@ import { useState, useEffect } from "react";
 import { Clock, FileText, History, Loader2, Lock, ClipboardCheck, Search, PenLine, X as XIcon, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface BudgetRequest {
   id: string;
   projectId?: string;
@@ -62,13 +55,13 @@ interface Project {
   status: string;
 }
 
-const API = "https://ifms-backend-nitj.onrender.com/api";
+const API = import.meta.env.VITE_API_URL;
 const fmtINR  = (n: number) => parseFloat(String(n || 0)).toLocaleString("en-IN");
 const fmtDate = (d: string) => d
   ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-  : "—";
+  : "â€”";
 
-// ── Stage Badge: formal labels ────────────────────────────────────────────────
+// â”€â”€ Stage Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const StageBadge = ({ r }: { r: BudgetRequest }) => {
   if (r.currentStage === "da" && r.status === "pending")
     return <Badge className="bg-blue-50 text-blue-700 border border-blue-200 text-xs font-medium">At DA</Badge>;
@@ -78,14 +71,11 @@ const StageBadge = ({ r }: { r: BudgetRequest }) => {
     return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs">At DR</Badge>;
   if (r.status === "approved")
     return <Badge className="bg-slate-100 text-slate-700 border border-slate-300 text-xs font-medium">Processed</Badge>;
-  if (r.status === "rejected")
-    return <Badge className="bg-red-50 text-red-700 border border-red-200 text-xs font-medium">Rejected</Badge>;
   return <Badge variant="secondary" className="text-xs">{r.status}</Badge>;
 };
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const DADashboard = () => {
-  // CHANGED: widget key remains "approve" internally but label is "Process Requests"
   const [activeWidget, setActiveWidget] = useState<"approve" | "expenditure">("approve");
 
   /* Requests state */
@@ -106,10 +96,9 @@ const DADashboard = () => {
   const [expInput,    setExpInput]    = useState("");
   const [savingExp,   setSavingExp]   = useState(false);
 
-  /* Request table search — shared across all tabs */
+  /* Request table search */
   const [reqSearch, setReqSearch] = useState("");
 
-  // ── Search helper ────────────────────────────────────────────────────────
   const filterReqs = (list: BudgetRequest[]) => {
     const q = reqSearch.trim().toLowerCase();
     if (!q) return list;
@@ -124,12 +113,10 @@ const DADashboard = () => {
     );
   };
 
-  // ── Derived lists ────────────────────────────────────────────────────────
   const myTurnRequests    = allRequests.filter(r => r.currentStage === "da" && r.status === "pending");
   const forwardedRequests = allRequests.filter(r => r.currentStage === "ar" || r.currentStage === "dr");
-  const completedRequests = allRequests.filter(r => r.status === "approved" || r.status === "rejected");
+  const completedRequests = allRequests.filter(r => r.status === "approved");
 
-  // Expenditure widget: fully approved requests only
   const approvedRequests = allRequests.filter(r => r.status === "approved");
 
   const filteredApprovedRequests = approvedRequests.filter(r =>
@@ -168,7 +155,6 @@ const DADashboard = () => {
 
   const canProcess = (r: BudgetRequest) => r.currentStage === "da" && r.status === "pending";
 
-  // CHANGED: handleApprove → handleProcess, toasts updated
   const handleProcess = async () => {
     if (!selectedReq) return;
     try {
@@ -186,25 +172,6 @@ const DADashboard = () => {
     finally { setActionLoading(false); }
   };
 
-  const handleReject = async () => {
-    if (!selectedReq) return;
-    if (!remarks.trim()) { toast.error("Remarks required for rejection"); return; }
-    try {
-      setActionLoading(true);
-      const r = await fetch(`${API}/reject-request.php`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId: selectedReq.id, stage: "da", remarks, rejectedBy: "DA Officer" }),
-      });
-      const d = await r.json();
-      if (!d.success) throw new Error(d.message);
-      toast.error("Request rejected. Balance restored.");
-      setDialogOpen(false); setSelectedReq(null); setRemarks(""); fetchAll();
-    } catch (e: any) { toast.error("Failed: " + e.message); }
-    finally { setActionLoading(false); }
-  };
-
-  // Confirm = save to server + refresh. isConfirmed is derived from server data (actual > 0)
   const handleConfirm = async (req: BudgetRequest, valueOverride?: string) => {
     const value = valueOverride ?? expInput;
     if (value === "" && !req.actualExpenditure) return;
@@ -229,7 +196,6 @@ const DADashboard = () => {
     finally { setSavingExp(false); }
   };
 
-  // Unlock for editing — just open the input; isConfirmed is re-derived after fetchAll
   const handleUnlockForEdit = (req: BudgetRequest) => {
     setEditingId(req.id);
     setExpInput(String(req.actualExpenditure || ""));
@@ -247,7 +213,7 @@ const DADashboard = () => {
           <div className="bg-white/60 backdrop-blur-lg border border-slate-200/60 rounded-xl p-6 shadow-sm">
             <h1 className="text-2xl font-semibold text-slate-900">DA Dashboard</h1>
             <p className="text-sm text-slate-500 mt-1">
-              Dealing Assistant · Process booking requests and record actual expenditure after full processing
+              Dealing Assistant Â· Process booking requests and record actual expenditure after full processing
             </p>
           </div>
 
@@ -256,7 +222,6 @@ const DADashboard = () => {
             {[
               {
                 key:   "approve",
-                // CHANGED: "Approve Requests" → "Process Requests"
                 title: "Process Requests",
                 sub:   `${processCount} request${processCount !== 1 ? "s" : ""} awaiting processing`,
                 count: processCount,
@@ -290,18 +255,18 @@ const DADashboard = () => {
             ))}
           </div>
 
-          {/* ── PROCESS WIDGET ──────────────────────────────────────────────── */}
+          {/* â”€â”€ PROCESS WIDGET â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           {activeWidget === "approve" && (
             <Card className="border border-slate-200/60 bg-white/70 backdrop-blur-lg shadow-lg">
               <CardHeader className="pb-3 border-b border-slate-100">
                 <div className="flex items-center justify-between gap-4">
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
-                    <ClipboardCheck className="h-5 w-5 text-slate-600" /> Budget Booking Requests — Processing Queue
+                    <ClipboardCheck className="h-5 w-5 text-slate-600" /> Budget Booking Requests â€” Processing Queue
                   </CardTitle>
                   <div className="relative flex-shrink-0">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                     <Input
-                      placeholder="Search GP No., PI, purpose, year…"
+                      placeholder="Search GP No., PI, purpose, yearâ€¦"
                       value={reqSearch}
                       onChange={e => setReqSearch(e.target.value)}
                       className="pl-8 h-8 w-56 text-xs border-slate-200"
@@ -313,14 +278,12 @@ const DADashboard = () => {
                 <Tabs defaultValue="myturn">
                   <div className="px-4 pt-3">
                     <TabsList className="bg-slate-100/80">
-                      {/* CHANGED: "My Turn" → "At DA" */}
                       <TabsTrigger value="myturn" className="text-xs">
                         At DA {processCount > 0 && (
                           <span className="ml-1.5 bg-blue-600 text-white text-[10px] rounded-full px-1.5 py-0.5">{processCount}</span>
                         )}
                       </TabsTrigger>
                       <TabsTrigger value="forwarded" className="text-xs">Forwarded ({forwardedRequests.length})</TabsTrigger>
-                      {/* CHANGED: "History" stays but completed label updated */}
                       <TabsTrigger value="history" className="text-xs">Processed ({completedRequests.length})</TabsTrigger>
                     </TabsList>
                   </div>
@@ -344,7 +307,7 @@ const DADashboard = () => {
             </Card>
           )}
 
-          {/* ── EXPENDITURE WIDGET ─────────────────────────────────────────── */}
+          {/* â”€â”€ EXPENDITURE WIDGET â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           {activeWidget === "expenditure" && (
             <Card className="border border-slate-200/60 bg-white/70 backdrop-blur-lg shadow-lg overflow-hidden">
               <CardHeader className="pb-3 border-b border-slate-100">
@@ -354,14 +317,14 @@ const DADashboard = () => {
                       <PenLine className="h-5 w-5 text-slate-600" /> Actual Expenditure Entry
                     </CardTitle>
                     <CardDescription className="text-xs mt-0.5">
-                      One row per <strong>processed booking request</strong> (DA → AR → DR all processed).
+                      One row per <strong>processed booking request</strong> (DA â†’ AR â†’ DR all processed).
                       Enter the verified expenditure amount, then <strong>Confirm</strong> to lock. Use the <strong>Edit</strong> button to revise.
                     </CardDescription>
                   </div>
                   <div className="relative flex-shrink-0">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                     <Input
-                      placeholder="Search…"
+                      placeholder="Searchâ€¦"
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
                       className="pl-8 h-8 w-48 text-xs border-slate-200"
@@ -375,7 +338,7 @@ const DADashboard = () => {
                   <EmptyState
                     icon={<FileText className="h-10 w-10" />}
                     message={approvedRequests.length === 0
-                      ? "No fully processed requests yet. Requests appear here only after DA → AR → DR all process."
+                      ? "No fully processed requests yet. Requests appear here only after DA â†’ AR â†’ DR all process."
                       : "No requests match your search."}
                   />
                 ) : (
@@ -385,8 +348,8 @@ const DADashboard = () => {
                         <TableRow className="bg-slate-50 border-b border-slate-200">
                           {[
                             "S.No", "Request No.", "GP Number", "Head", "Purpose",
-                            "Invoice No.", "PI Name", "Booked Amount (₹)",
-                            "Actual Expenditure (₹)",
+                            "Invoice No.", "PI Name", "Booked Amount (â‚¹)",
+                            "Actual Expenditure (â‚¹)",
                             "Action",
                             "Status",
                           ].map(h => (
@@ -399,8 +362,6 @@ const DADashboard = () => {
                           const booked    = parseFloat(String(req.amount || 0));
                           const actual    = parseFloat(String(req.actualExpenditure || 0));
                           const isEditing = editingId === req.id;
-                          // FIXED: derive confirmed from server — actual > 0 means entry exists
-                          // isEditing overrides so the row stays editable while the user types
                           const isConfirmed = actual > 0 && !isEditing;
                           const isDone      = actual > 0;
 
@@ -418,32 +379,29 @@ const DADashboard = () => {
                               <TableCell className="text-xs font-semibold px-3">{req.gpNumber}</TableCell>
 
                               <TableCell className="text-xs px-3 max-w-[110px]">
-                                <div className="truncate" title={req.headName}>{req.headName || "—"}</div>
+                                <div className="truncate" title={req.headName}>{req.headName || "â€”"}</div>
                                 {req.headType && <div className="text-[10px] text-slate-400">{req.headType}</div>}
                               </TableCell>
 
                               <TableCell className="text-xs px-3 max-w-[140px]">
-                                <span className="line-clamp-2" title={req.purpose}>{req.purpose || "—"}</span>
+                                <span className="line-clamp-2" title={req.purpose}>{req.purpose || "â€”"}</span>
                               </TableCell>
 
-                              <TableCell className="text-xs px-3 font-mono">{req.invoiceNumber || "—"}</TableCell>
+                              <TableCell className="text-xs px-3 font-mono">{req.invoiceNumber || "â€”"}</TableCell>
                               <TableCell className="text-xs px-3">{req.piName}</TableCell>
 
-                              {/* Booked Amount */}
                               <TableCell className="text-xs px-3 text-right font-semibold text-blue-700">
-                                ₹{fmtINR(booked)}
+                                â‚¹{fmtINR(booked)}
                               </TableCell>
 
-                              {/* Actual Expenditure — inline editable, lockable */}
                               <TableCell className="px-3">
                                 {isEditing ? (
-                                  /* ── EDIT MODE: input only, Confirm in Action column ── */
                                   <div className="flex items-center gap-1">
                                     <Input
                                       type="number"
                                       value={expInput}
                                       onChange={e => setExpInput(e.target.value)}
-                                      placeholder={`Max ₹${fmtINR(booked)}`}
+                                      placeholder={`Max â‚¹${fmtINR(booked)}`}
                                       className="h-7 w-32 text-xs border-purple-400"
                                       autoFocus
                                       max={booked}
@@ -460,20 +418,17 @@ const DADashboard = () => {
                                     </Button>
                                   </div>
                                 ) : isConfirmed ? (
-                                  /* ── CONFIRMED/LOCKED ── show value with lock icon */
                                   <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 text-xs font-semibold">
-                                    <Lock className="h-3 w-3" />₹{fmtINR(actual)}
+                                    <Lock className="h-3 w-3" />â‚¹{fmtINR(actual)}
                                   </div>
                                 ) : isDone ? (
-                                  /* ── SAVED BUT NOT YET CONFIRMED — show value, editable */
                                   <button
                                     onClick={() => { setEditingId(req.id); setExpInput(String(actual)); }}
                                     className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-100 text-purple-800 text-xs font-semibold hover:bg-purple-200 transition-colors"
                                   >
-                                    <PenLine className="h-3 w-3" />₹{fmtINR(actual)}
+                                    <PenLine className="h-3 w-3" />â‚¹{fmtINR(actual)}
                                   </button>
                                 ) : (
-                                  /* ── NOTHING ENTERED YET ── */
                                   <button
                                     onClick={() => { setEditingId(req.id); setExpInput(""); }}
                                     className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 text-xs font-medium hover:bg-amber-200 border border-dashed border-amber-300"
@@ -483,10 +438,8 @@ const DADashboard = () => {
                                 )}
                               </TableCell>
 
-                              {/* NEW: Action column — Confirm (saves + locks) or Edit (unlocks) */}
                               <TableCell className="px-3 whitespace-nowrap">
                                 {isConfirmed ? (
-                                  /* CONFIRMED → Edit pencil to unlock */
                                   <button
                                     onClick={() => handleUnlockForEdit(req)}
                                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 border border-slate-300 transition-colors"
@@ -494,7 +447,6 @@ const DADashboard = () => {
                                     <PenLine className="h-3 w-3" /> Edit
                                   </button>
                                 ) : isEditing ? (
-                                  /* EDITING → Confirm saves + locks immediately */
                                   <button
                                     onClick={() => handleConfirm(req, expInput)}
                                     disabled={savingExp || expInput === ""}
@@ -506,7 +458,6 @@ const DADashboard = () => {
                                     Confirm
                                   </button>
                                 ) : isDone ? (
-                                  /* SAVED but somehow unconfirmed (edge case) → still show Confirm */
                                   <button
                                     onClick={() => handleConfirm(req)}
                                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm"
@@ -514,11 +465,10 @@ const DADashboard = () => {
                                     <CheckCircle2 className="h-3 w-3" /> Confirm
                                   </button>
                                 ) : (
-                                  <span className="text-[10px] text-slate-400">—</span>
+                                  <span className="text-[10px] text-slate-400">â€”</span>
                                 )}
                               </TableCell>
 
-                              {/* Entry status */}
                               <TableCell className="px-3">
                                 {isConfirmed ? (
                                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-700 bg-slate-100 border border-slate-300 px-2 py-0.5 rounded-full">
@@ -542,17 +492,17 @@ const DADashboard = () => {
                   <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between">
                     <p className="text-xs text-slate-500">
                       Showing <span className="font-semibold">{filteredApprovedRequests.length}</span> processed requests
-                      &nbsp;·&nbsp;
+                      &nbsp;Â·&nbsp;
                       <span className="text-slate-700 font-semibold">
                         {filteredApprovedRequests.filter(r => (r.actualExpenditure ?? 0) > 0).length} confirmed
                       </span>
-                      &nbsp;·&nbsp;
+                      &nbsp;Â·&nbsp;
                       <span className="text-slate-500 font-semibold">
                         {filteredApprovedRequests.filter(r => !(r.actualExpenditure ?? 0)).length} pending entry
                       </span>
                     </p>
                     <p className="text-xs text-slate-400">
-                      Total actual entered: ₹{fmtINR(
+                      Total actual entered: â‚¹{fmtINR(
                         filteredApprovedRequests.reduce((s, r) => s + parseFloat(String(r.actualExpenditure || 0)), 0)
                       )}
                     </p>
@@ -564,16 +514,15 @@ const DADashboard = () => {
         </div>
       </div>
 
-      {/* Review Dialog — CHANGED: "Approve" → "Process" throughout */}
+      {/* Review Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            {/* CHANGED: dialog title */}
             <DialogTitle>{selectedReq && canProcess(selectedReq) ? "Review & Process Request" : "Request Details"}</DialogTitle>
             <DialogDescription>
               {selectedReq && canProcess(selectedReq)
-                ? "At DA stage — you may process or reject this request"
-                : "View only — request is not at DA stage"}
+                ? "At DA stage â€” you may process this request"
+                : "View only â€” request is not at DA stage"}
             </DialogDescription>
           </DialogHeader>
           {selectedReq && (
@@ -583,11 +532,11 @@ const DADashboard = () => {
                   ["GP Number",    selectedReq.gpNumber],
                   ["PI Name",      selectedReq.piName],
                   ["Department",   selectedReq.department],
-                  ["Amount",       `₹${fmtINR(selectedReq.amount)}`],
-                  ["Head",         selectedReq.headName || "—"],
-                  ["Invoice No.",  selectedReq.invoiceNumber || "—"],
+                  ["Amount",       `â‚¹${fmtINR(selectedReq.amount)}`],
+                  ["Head",         selectedReq.headName || "â€”"],
+                  ["Invoice No.",  selectedReq.invoiceNumber || "â€”"],
                   ["Actual Exp.",  selectedReq.actualExpenditure
-                                    ? `₹${fmtINR(selectedReq.actualExpenditure)}`
+                                    ? `â‚¹${fmtINR(selectedReq.actualExpenditure)}`
                                     : "Not yet entered"],
                 ].map(([l, v]) => (
                   <div key={l}><p className="text-xs text-slate-500">{l}</p><p className="text-sm font-medium text-slate-800">{v}</p></div>
@@ -598,7 +547,6 @@ const DADashboard = () => {
                 <div><p className="text-xs text-slate-500 mb-1">Description</p><p className="text-sm">{selectedReq.description}</p></div>
               )}
 
-              {/* Approval/Processing timeline */}
               {selectedReq.approvalHistory && selectedReq.approvalHistory.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-slate-600">Processing Timeline</p>
@@ -607,13 +555,10 @@ const DADashboard = () => {
                       <div key={i} className="flex items-start gap-2 text-xs p-2 rounded-lg bg-slate-50 border border-slate-100">
                         <span className={`px-1.5 py-0.5 rounded font-semibold uppercase text-[10px] ${
                           h.action === "approved" ? "bg-emerald-100 text-emerald-700"
-                          : h.action === "rejected" ? "bg-red-100 text-red-700"
                           : "bg-blue-100 text-blue-700"}`}>
-                          {/* CHANGED: show stage label formally */}
                           {h.stage === "da" ? "DA" : h.stage === "ar" ? "AR" : h.stage === "dr" ? "DR" : h.stage}
                         </span>
                         <div>
-                          {/* CHANGED: "approved" → "processed" in timeline */}
                           <p className="font-medium">{h.action === "approved" ? "processed" : h.action} by {h.by}</p>
                           {h.remarks && <p className="text-slate-500">{h.remarks}</p>}
                         </div>
@@ -628,20 +573,19 @@ const DADashboard = () => {
 
               {canProcess(selectedReq) && (
                 <div className="space-y-1.5">
-                  <Label className="text-sm">Remarks (optional — visible to AR &amp; DR)</Label>
+                  <Label className="text-sm">Remarks (optional â€” visible to AR &amp; DR)</Label>
                   <Textarea
-                    placeholder="Comments for next authority…"
+                    placeholder="Comments for next authorityâ€¦"
                     value={remarks}
                     onChange={e => setRemarks(e.target.value)}
                     rows={3}
                   />
                 </div>
               )}
-              {!canProcess(selectedReq) && selectedReq.status !== "approved" && selectedReq.status !== "rejected" && (
+              {!canProcess(selectedReq) && selectedReq.status !== "approved" && (
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex gap-3">
                   <Lock className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
                   <div>
-                    {/* CHANGED: formal message */}
                     <p className="text-sm font-semibold text-amber-900">Request Not at DA Stage</p>
                     <p className="text-xs text-amber-700 mt-0.5">
                       Currently pending at <strong>{selectedReq.currentStage?.toUpperCase()}</strong> stage. No action required from DA at this time.
@@ -655,12 +599,8 @@ const DADashboard = () => {
             {selectedReq && canProcess(selectedReq) ? (
               <>
                 <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={actionLoading}>Cancel</Button>
-                <Button variant="destructive" onClick={handleReject} disabled={actionLoading}>
-                  {actionLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Rejecting…</> : "Reject"}
-                </Button>
-                {/* CHANGED: "Approve & Forward" → "Process & Forward" */}
                 <Button onClick={handleProcess} disabled={actionLoading} className="bg-slate-800 hover:bg-slate-900">
-                  {actionLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing…</> : "Process & Forward to AR ➡"}
+                  {actionLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processingâ€¦</> : "Process & Forward to AR âž¡"}
                 </Button>
               </>
             ) : (
@@ -673,7 +613,7 @@ const DADashboard = () => {
   );
 };
 
-// ─── Small helpers ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Small helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const EmptyState = ({ icon, message }: { icon: React.ReactNode; message: string }) => (
   <div className="flex flex-col items-center justify-center py-14 px-6 text-center text-slate-400">
     <div className="mb-3 opacity-30">{icon}</div>
@@ -687,7 +627,6 @@ const Spinner = () => (
   </div>
 );
 
-// CHANGED: prop renamed canProcess (was canApprove), button labels updated
 const ReqTable = ({
   requests, canProcess, onView,
 }: {
@@ -699,7 +638,7 @@ const ReqTable = ({
     <Table>
       <TableHeader>
         <TableRow className="bg-slate-50">
-          {["Date", "GP Number", "PI Name", "Head", "Purpose", "Amount (₹)", "Invoice", "Stage", ""].map(h => (
+          {["Date", "GP Number", "PI Name", "Head", "Purpose", "Amount (â‚¹)", "Invoice", "Stage", ""].map(h => (
             <TableHead key={h} className="text-[10px] font-semibold text-slate-600 py-2.5 px-3 whitespace-nowrap">{h}</TableHead>
           ))}
         </TableRow>
@@ -712,12 +651,12 @@ const ReqTable = ({
             </TableCell>
             <TableCell className="text-xs font-semibold px-3">{r.gpNumber}</TableCell>
             <TableCell className="text-xs px-3">{r.piName}</TableCell>
-            <TableCell className="text-xs px-3 max-w-[100px] truncate">{r.headName || "—"}</TableCell>
+            <TableCell className="text-xs px-3 max-w-[100px] truncate">{r.headName || "â€”"}</TableCell>
             <TableCell className="text-xs px-3 max-w-[130px] truncate">{r.purpose}</TableCell>
             <TableCell className="text-xs px-3 font-semibold text-right">
               {parseFloat(String(r.amount || 0)).toLocaleString("en-IN")}
             </TableCell>
-            <TableCell className="text-xs px-3">{r.invoiceNumber || "—"}</TableCell>
+            <TableCell className="text-xs px-3">{r.invoiceNumber || "â€”"}</TableCell>
             <TableCell className="px-3"><StageBadge r={r} /></TableCell>
             <TableCell className="px-3">
               <Button
@@ -726,7 +665,6 @@ const ReqTable = ({
                 className={`h-7 text-xs px-3 ${canProcess(r) ? "bg-slate-800 hover:bg-slate-900" : ""}`}
                 onClick={() => onView(r)}
               >
-                {/* CHANGED: "Review & Approve" → "Review & Process" */}
                 {canProcess(r) ? "Review & Process" : "View"}
               </Button>
             </TableCell>

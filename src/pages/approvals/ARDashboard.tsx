@@ -1,6 +1,5 @@
-// pages/approvals/ARDashboard.tsx
-// AR = Accounts Representative — SECOND stage in the approval chain
-// CHANGED: "approve/approved" → "recommend/recommended" throughout
+﻿// pages/approvals/ARDashboard.tsx
+// AR = Accounts Representative â€” SECOND stage in the approval chain
 
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,8 +39,8 @@ interface BudgetRequest {
 }
 
 const formatDate = (d: string) =>
-  !d ? "—" : new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-const formatAmount = (n: number) => `₹${(n / 100000).toFixed(2)}L`;
+  !d ? "â€”" : new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+const formatAmount = (n: number) => `â‚¹${(n / 100000).toFixed(2)}L`;
 
 const ARDashboard = () => {
   const [myTurnRequests,    setMyTurnRequests]    = useState<BudgetRequest[]>([]);
@@ -58,11 +57,11 @@ const ARDashboard = () => {
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const r1 = await fetch("https://ifms-backend-nitj.onrender.com/api/get-requests-by-stage.php?stage=ar&type=pending");
+      const r1 = await fetch(`${import.meta.env.VITE_API_URL}/get-requests-by-stage.php?stage=ar&type=pending`);
       const d1 = await r1.json();
       setMyTurnRequests(d1.data || []);
 
-      const r2 = await fetch("https://ifms-backend-nitj.onrender.com/api/get-requests-by-stage.php?stage=all&type=completed");
+      const r2 = await fetch(`${import.meta.env.VITE_API_URL}/get-requests-by-stage.php?stage=all&type=completed`);
       const d2 = await r2.json();
       setCompletedRequests(d2.data || []);
     } catch { toast.error("Failed to load requests"); }
@@ -72,41 +71,21 @@ const ARDashboard = () => {
   const canRecommend = (r: BudgetRequest) =>
     r.currentStage === "ar" && r.status === "da_approved";
 
-  // CHANGED: handleApprove → handleRecommend
   const handleRecommend = async () => {
     if (!selectedRequest || !canRecommend(selectedRequest)) return;
     try {
       setActionLoading(true);
-      const res = await fetch("https://ifms-backend-nitj.onrender.com/api/ar-approve.php", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/ar-approve.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requestId: selectedRequest.id, remarks, approvedBy: "AR Officer" }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
-      toast.success("Request recommended ✅ Forwarded to DR");
+      toast.success("Request recommended âœ… Forwarded to DR");
       setDialogOpen(false); setSelectedRequest(null); setRemarks("");
       await fetchRequests();
     } catch (e: any) { toast.error(e.message || "Failed to recommend"); }
-    finally  { setActionLoading(false); }
-  };
-
-  const handleReject = async () => {
-    if (!selectedRequest || !canRecommend(selectedRequest)) return;
-    if (!remarks.trim()) { toast.error("Please enter remarks for rejection"); return; }
-    try {
-      setActionLoading(true);
-      const res = await fetch("https://ifms-backend-nitj.onrender.com/api/reject-request.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId: selectedRequest.id, stage: "ar", remarks, rejectedBy: "AR Officer" }),
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message);
-      toast.error("Request rejected");
-      setDialogOpen(false); setSelectedRequest(null); setRemarks("");
-      await fetchRequests();
-    } catch (e: any) { toast.error(e.message || "Failed to reject"); }
     finally  { setActionLoading(false); }
   };
 
@@ -127,6 +106,9 @@ const ARDashboard = () => {
 
   const openRequest = (r: BudgetRequest) => { setSelectedRequest(r); setRemarks(""); setDialogOpen(true); };
 
+  // Only show approved (not rejected) in completed
+  const completedApproved = completedRequests.filter(r => r.status === "approved");
+
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-gray-50">
@@ -137,39 +119,29 @@ const ARDashboard = () => {
             <div>
               <h1 className="text-2xl font-bold text-slate-900">AR Dashboard</h1>
               <p className="text-sm text-slate-500 mt-0.5">
-                Accounts Representative · Second stage &nbsp;
-                <span className="text-slate-400 font-mono">DA → <strong className="text-indigo-600">AR</strong> → DR</span>
+                Accounts Representative Â· Second stage &nbsp;
+                <span className="text-slate-400 font-mono">DA â†’ <strong className="text-indigo-600">AR</strong> â†’ DR</span>
               </p>
             </div>
             <Button onClick={fetchRequests} variant="outline" size="sm">Refresh</Button>
           </div>
 
           {/* Summary cards */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             {[
               {
-                // CHANGED: "Your Turn" → "At AR"
                 label: "At AR",
                 value: myTurnRequests.length,
                 color: "text-indigo-600",
                 icon: <Clock className="h-4 w-4 text-indigo-500" />,
-                // CHANGED: sub label
                 sub: "DA-processed, awaiting AR recommendation",
               },
               {
-                // CHANGED: "Approved" → "Recommended"
                 label: "Recommended",
-                value: completedRequests.filter(r => r.status === "approved").length,
+                value: completedApproved.length,
                 color: "text-emerald-600",
                 icon: <CheckCircle className="h-4 w-4 text-emerald-500" />,
                 sub: "Fully recommended & forwarded",
-              },
-              {
-                label: "Rejected",
-                value: completedRequests.filter(r => r.status === "rejected").length,
-                color: "text-rose-600",
-                icon: <ChevronRight className="h-4 w-4 text-rose-500" />,
-                sub: "Rejected at any stage",
               },
             ].map(c => (
               <Card key={c.label} className="border border-slate-200/60 bg-white/70 shadow-sm">
@@ -196,7 +168,7 @@ const ARDashboard = () => {
                 <div className="relative flex-shrink-0">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                   <Input
-                    placeholder="Search GP No., PI, purpose, year…"
+                    placeholder="Search GP No., PI, purpose, yearâ€¦"
                     value={reqSearch}
                     onChange={e => setReqSearch(e.target.value)}
                     className="pl-8 h-8 w-56 text-xs border-slate-200"
@@ -208,16 +180,14 @@ const ARDashboard = () => {
               {loading ? (
                 <div className="flex items-center justify-center py-16">
                   <Loader2 className="h-6 w-6 animate-spin text-indigo-400 mr-2" />
-                  <p className="text-slate-500 text-sm">Loading…</p>
+                  <p className="text-slate-500 text-sm">Loadingâ€¦</p>
                 </div>
               ) : (
                 <Tabs defaultValue="myturn">
                   <div className="px-4 pt-3">
                     <TabsList className="bg-indigo-50">
-                      {/* CHANGED: "My Turn" → "At AR" */}
                       <TabsTrigger value="myturn">At AR ({myTurnRequests.length})</TabsTrigger>
-                      {/* CHANGED: "History" → "Processed" */}
-                      <TabsTrigger value="history">Processed ({completedRequests.length})</TabsTrigger>
+                      <TabsTrigger value="history">Processed ({completedApproved.length})</TabsTrigger>
                     </TabsList>
                   </div>
 
@@ -230,10 +200,10 @@ const ARDashboard = () => {
                   </TabsContent>
 
                   <TabsContent value="history" className="px-4 pb-4 mt-3">
-                    {filterReqs(completedRequests).length === 0 ? (
+                    {filterReqs(completedApproved).length === 0 ? (
                       <EmptyState icon={<History className="h-10 w-10" />} message={reqSearch ? "No matching requests." : "No processed requests yet"} />
                     ) : (
-                      <HistoryTable requests={filterReqs(completedRequests)} onView={openRequest} />
+                      <HistoryTable requests={filterReqs(completedApproved)} onView={openRequest} />
                     )}
                   </TabsContent>
                 </Tabs>
@@ -247,15 +217,13 @@ const ARDashboard = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            {/* CHANGED: dialog title */}
             <DialogTitle>
               {selectedRequest && canRecommend(selectedRequest) ? "Review & Recommend (AR Stage)" : "Request Details"}
             </DialogTitle>
             <DialogDescription>
               {selectedRequest && canRecommend(selectedRequest)
-                // CHANGED: description
-                ? "✅ This request was processed by DA — you may recommend or reject it"
-                : "ℹ️ View only"}
+                ? "âœ… This request was processed by DA â€” you may recommend it"
+                : "â„¹ï¸ View only"}
             </DialogDescription>
           </DialogHeader>
 
@@ -268,7 +236,7 @@ const ARDashboard = () => {
                   ["Department",   selectedRequest.department],
                   ["Amount",       formatAmount(selectedRequest.amount)],
                   ["Project Type", selectedRequest.projectType],
-                  ["Invoice No.",  selectedRequest.invoiceNumber || "—"],
+                  ["Invoice No.",  selectedRequest.invoiceNumber || "â€”"],
                 ].map(([label, val]) => (
                   <div key={label}>
                     <p className="text-xs text-slate-500">{label}</p>
@@ -297,10 +265,9 @@ const ARDashboard = () => {
 
               {canRecommend(selectedRequest) && (
                 <div className="space-y-1.5">
-                  {/* CHANGED: label */}
-                  <Label className="text-sm">Your Remarks (Optional — visible to DR)</Label>
+                  <Label className="text-sm">Your Remarks (Optional â€” visible to DR)</Label>
                   <Textarea
-                    placeholder="Enter comments for DR to see…"
+                    placeholder="Enter comments for DR to seeâ€¦"
                     value={remarks}
                     onChange={e => setRemarks(e.target.value)}
                     rows={3}
@@ -310,11 +277,9 @@ const ARDashboard = () => {
               )}
 
               {!canRecommend(selectedRequest) &&
-                selectedRequest.status !== "approved" &&
-                selectedRequest.status !== "rejected" && (
+                selectedRequest.status !== "approved" && (
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex gap-3">
                   <Lock className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
-                  {/* CHANGED: message */}
                   <p className="text-sm text-amber-800">
                     Currently at <strong>{selectedRequest.currentStage.toUpperCase()}</strong> stage. AR can only recommend DA-processed requests.
                   </p>
@@ -327,15 +292,11 @@ const ARDashboard = () => {
             {selectedRequest && canRecommend(selectedRequest) ? (
               <>
                 <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={actionLoading}>Cancel</Button>
-                <Button variant="destructive" onClick={handleReject} disabled={actionLoading}>
-                  {actionLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Rejecting…</> : "Reject"}
-                </Button>
-                {/* CHANGED: button label */}
                 <Button onClick={handleRecommend} disabled={actionLoading}
                   className="bg-indigo-700 hover:bg-indigo-800">
                   {actionLoading
-                    ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Recommending…</>
-                    : "Recommend & Forward to DR ➡"}
+                    ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Recommendingâ€¦</>
+                    : "Recommend & Forward to DR âž¡"}
                 </Button>
               </>
             ) : (
@@ -355,7 +316,6 @@ const EmptyState = ({ icon, message }: { icon: React.ReactNode; message: string 
   </div>
 );
 
-// CHANGED: prop canApprove → canRecommend, button label updated
 const RequestsTable = ({ requests, canRecommend, onView, stageColor }: {
   requests: BudgetRequest[];
   canRecommend: (r: BudgetRequest) => boolean;
@@ -380,14 +340,13 @@ const RequestsTable = ({ requests, canRecommend, onView, stageColor }: {
             <TableCell className="text-xs px-3 max-w-[140px] truncate">{r.purpose}</TableCell>
             <TableCell className="text-xs px-3 font-medium">{formatAmount(r.amount)}</TableCell>
             <TableCell className="text-xs px-3 text-slate-500 max-w-[120px] truncate italic">
-              {r.daRemarks || "—"}
+              {r.daRemarks || "â€”"}
             </TableCell>
             <TableCell className="px-3">
               <Button size="sm"
                 variant={canRecommend(r) ? "default" : "outline"}
                 className={`h-7 text-xs px-3 ${canRecommend(r) ? "bg-indigo-700 hover:bg-indigo-800" : ""}`}
                 onClick={() => onView(r)}>
-                {/* CHANGED: button label */}
                 {canRecommend(r) ? "Review & Recommend" : "View"}
               </Button>
             </TableCell>
@@ -416,10 +375,7 @@ const HistoryTable = ({ requests, onView }: { requests: BudgetRequest[]; onView:
             <TableCell className="text-xs px-3">{r.piName}</TableCell>
             <TableCell className="text-xs px-3">{formatAmount(r.amount)}</TableCell>
             <TableCell className="px-3">
-              {r.status === "approved"
-                // CHANGED: badge labels
-                ? <Badge className="bg-emerald-100 text-emerald-800 text-xs">✅ Recommended</Badge>
-                : <Badge variant="destructive" className="text-xs">❌ Rejected</Badge>}
+              <Badge className="bg-emerald-100 text-emerald-800 text-xs">âœ… Recommended</Badge>
             </TableCell>
             <TableCell className="px-3">
               <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => onView(r)}>View</Button>

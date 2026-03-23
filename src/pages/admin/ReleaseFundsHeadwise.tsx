@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -80,7 +80,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
       setLoading(true);
       
       const response = await fetch(
-        `https://ifms-backend-nitj.onrender.com/api/fund-allocations.php?projectId=${project.id}`
+        `http://localhost:8000/api/fund-allocations.php?projectId=${project.id}`
       );
       const data = await response.json();
 
@@ -125,7 +125,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
           
           // Validation
           if (releaseAmount !== "" && releaseAmount > alloc.availableToRelease) {
-            newErrors[id] = `Cannot exceed ₹${alloc.availableToRelease.toLocaleString("en-IN")}`;
+            newErrors[id] = `Cannot exceed â‚¹${alloc.availableToRelease.toLocaleString("en-IN")}`;
             return alloc;
           }
           
@@ -271,16 +271,16 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
   letterDate: format(letterDate, "yyyy-MM-dd"),
   letterNumber: letterNumber.trim(),
   remarks: remarks.trim(),
-  releasedBy: "Admin",                    // ← ADD THIS (PHP reads releasedBy)
-  releases: allocationsToRelease.map(alloc => ({   // ← was "headwiseReleases"
+  releasedBy: "Admin",                    // â† ADD THIS (PHP reads releasedBy)
+  releases: allocationsToRelease.map(alloc => ({   // â† was "headwiseReleases"
     headId: alloc.headId,
     headName: alloc.headName,
     headType: alloc.headType,
-    amount: parseFloat(alloc.releaseAmount),        // ← was "releaseAmount", PHP reads "amount"
+    amount: parseFloat(alloc.releaseAmount),        // â† was "releaseAmount", PHP reads "amount"
   })),
 };
 
-      const response = await fetch("https://ifms-backend-nitj.onrender.com/api/release-funds-headwise.php", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/release-funds-headwise.php`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -323,7 +323,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
 
   const getStatusBadge = (allocation) => {
     if (allocation.isConfirmed && parseFloat(allocation.releaseAmount) > 0) {
-      return <Badge className="bg-green-50 text-green-700 border-green-200">✓ Confirmed</Badge>;
+      return <Badge className="bg-green-50 text-green-700 border-green-200">âœ“ Confirmed</Badge>;
     }
     if (parseFloat(allocation.releaseAmount) > 0) {
       return <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
@@ -347,7 +347,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
               <div className="text-center space-y-2">
                 <h3 className="text-2xl font-bold text-gray-900">Funds Released Successfully!</h3>
                 <p className="text-gray-600">
-                  ₹{parseFloat(totalReleaseAmount || 0).toLocaleString("en-IN")} released for {project.gpNumber}
+                  â‚¹{parseFloat(totalReleaseAmount || 0).toLocaleString("en-IN")} released for {project.gpNumber}
                 </p>
               </div>
             </div>
@@ -380,19 +380,19 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
                   <div>
                     <p className="text-xs text-gray-600">Total Sanctioned</p>
                     <p className="text-lg font-bold text-blue-600">
-                      ₹{getTotalSanctioned().toLocaleString("en-IN")}
+                      â‚¹{getTotalSanctioned().toLocaleString("en-IN")}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-600">Already Released</p>
                     <p className="text-lg font-bold text-orange-600">
-                      ₹{getAlreadyReleased().toLocaleString("en-IN")}
+                      â‚¹{getAlreadyReleased().toLocaleString("en-IN")}
                     </p>
                   </div>
                   <div className="col-span-2 pt-2 border-t border-blue-200">
                     <p className="text-sm text-gray-600 font-medium">Available to Release</p>
                     <p className="text-2xl font-bold text-green-600">
-                      ₹{getAvailableToRelease().toLocaleString("en-IN")}
+                      â‚¹{getAvailableToRelease().toLocaleString("en-IN")}
                     </p>
                   </div>
                 </div>
@@ -416,7 +416,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
                 />
                 {totalReleaseAmount && parseFloat(totalReleaseAmount) > getAvailableToRelease() && (
                   <p className="text-xs text-red-600 mt-2 font-medium">
-                    ⚠ Exceeds available balance of ₹{getAvailableToRelease().toLocaleString("en-IN")}
+                    âš  Exceeds available balance of â‚¹{getAvailableToRelease().toLocaleString("en-IN")}
                   </p>
                 )}
                 {totalReleaseAmount && parseFloat(totalReleaseAmount) > 0 && 
@@ -437,7 +437,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
                       <div>
                         <p className="text-xs text-gray-600">Total to Release</p>
                         <p className="text-lg font-bold text-blue-900">
-                          ₹{parseFloat(totalReleaseAmount).toLocaleString("en-IN")}
+                          â‚¹{parseFloat(totalReleaseAmount).toLocaleString("en-IN")}
                         </p>
                       </div>
                     </div>
@@ -467,7 +467,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
                             ? 'text-green-600'
                             : 'text-yellow-600'
                         }`}>
-                          ₹{getHeadwiseReleaseSum().toLocaleString("en-IN")}
+                          â‚¹{getHeadwiseReleaseSum().toLocaleString("en-IN")}
                         </p>
                         {getHeadwiseReleaseSum() > parseFloat(totalReleaseAmount) && (
                           <p className="text-xs text-red-600 font-medium">Exceeds total!</p>
@@ -613,13 +613,13 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
                                   </Badge>
                                 </td>
                                 <td className="px-4 py-3 text-right text-sm font-medium">
-                                  ₹{allocation.sanctionedAmount.toLocaleString("en-IN")}
+                                  â‚¹{allocation.sanctionedAmount.toLocaleString("en-IN")}
                                 </td>
                                 <td className="px-4 py-3 text-right text-sm font-medium text-orange-600">
-                                  ₹{allocation.alreadyReleased.toLocaleString("en-IN")}
+                                  â‚¹{allocation.alreadyReleased.toLocaleString("en-IN")}
                                 </td>
                                 <td className="px-4 py-3 text-right text-sm font-bold text-green-600">
-                                  ₹{allocation.availableToRelease.toLocaleString("en-IN")}
+                                  â‚¹{allocation.availableToRelease.toLocaleString("en-IN")}
                                 </td>
                                 <td className="px-4 py-3">
                                   {isEditing || !allocation.isConfirmed ? (
@@ -643,7 +643,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
                                     </div>
                                   ) : (
                                     <span className="text-sm font-semibold text-right block">
-                                      {hasAmount ? `₹${parseFloat(allocation.releaseAmount).toLocaleString("en-IN")}` : "—"}
+                                      {hasAmount ? `â‚¹${parseFloat(allocation.releaseAmount).toLocaleString("en-IN")}` : "â€”"}
                                     </span>
                                   )}
                                 </td>
@@ -715,7 +715,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
                                               <div>
                                                 <span className="font-medium text-gray-600">Amount:</span>
                                                 <span className="ml-2 font-semibold text-green-600">
-                                                  ₹{release.releaseAmount.toLocaleString("en-IN")}
+                                                  â‚¹{release.releaseAmount.toLocaleString("en-IN")}
                                                 </span>
                                               </div>
                                               {release.remarks && (

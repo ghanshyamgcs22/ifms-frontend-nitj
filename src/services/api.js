@@ -1,18 +1,18 @@
-// services/api.js - CORRECTED VERSION
+﻿// services/api.js - CORRECTED VERSION
 
-const API_URL = 'https://ifms-backend-nitj.onrender.com/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const handleResponse = async (response) => {
-  console.log("📡 Response status:", response.status);
+  console.log("ðŸ“¡ Response status:", response.status);
   
   const text = await response.text();
-  console.log("📡 Raw response:", text);
+  console.log("ðŸ“¡ Raw response:", text);
   
   let data;
   try {
     data = JSON.parse(text);
   } catch (e) {
-    console.error("❌ Failed to parse JSON:", e);
+    console.error("âŒ Failed to parse JSON:", e);
     throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
   }
   
@@ -30,26 +30,26 @@ export const budgetRequestsAPI = {
       if (status) params.append('status', status);
       if (gpNumber) params.append('gpNumber', gpNumber);
       
-      console.log("📡 Fetching budget requests with params:", params.toString());
+      console.log("ðŸ“¡ Fetching budget requests with params:", params.toString());
       const response = await fetch(`${API_URL}/budget-requests.php?${params}`);
       const result = await handleResponse(response);
-      console.log("✅ Fetched budget requests:", result);
+      console.log("âœ… Fetched budget requests:", result);
       return result;
     } catch (error) {
-      console.error("❌ Error fetching budget requests:", error);
+      console.error("âŒ Error fetching budget requests:", error);
       throw error;
     }
   },
 
   async getById(id) {
     try {
-      console.log("📡 Fetching budget request:", id);
+      console.log("ðŸ“¡ Fetching budget request:", id);
       const response = await fetch(`${API_URL}/budget-requests.php?id=${id}`);
       const result = await handleResponse(response);
-      console.log("✅ Fetched budget request:", result);
+      console.log("âœ… Fetched budget request:", result);
       return result;
     } catch (error) {
-      console.error("❌ Error fetching budget request:", error);
+      console.error("âŒ Error fetching budget request:", error);
       throw error;
     }
   },
@@ -84,7 +84,7 @@ export const budgetRequestsAPI = {
 
   async create(data) {
     try {
-      console.log("🚀 Creating budget request:", data);
+      console.log("ðŸš€ Creating budget request:", data);
       const response = await fetch(`${API_URL}/budget-requests.php`, {
         method: 'POST',
         headers: { 
@@ -93,17 +93,17 @@ export const budgetRequestsAPI = {
         body: JSON.stringify(data)
       });
       const result = await handleResponse(response);
-      console.log("✅ Budget request created:", result);
+      console.log("âœ… Budget request created:", result);
       return result;
     } catch (error) {
-      console.error("❌ Error creating budget request:", error);
+      console.error("âŒ Error creating budget request:", error);
       throw error;
     }
   },
 
   async forward(id, remarks, by = 'Admin User') {
     try {
-      console.log("📤 Forwarding request:", id);
+      console.log("ðŸ“¤ Forwarding request:", id);
       const response = await fetch(`${API_URL}/budget-requests.php?id=${id}`, {
         method: 'PUT',
         headers: { 
@@ -117,10 +117,10 @@ export const budgetRequestsAPI = {
         })
       });
       const result = await handleResponse(response);
-      console.log("✅ Request forwarded:", result);
+      console.log("âœ… Request forwarded:", result);
       return result;
     } catch (error) {
-      console.error("❌ Error forwarding request:", error);
+      console.error("âŒ Error forwarding request:", error);
       throw error;
     }
   },
@@ -128,7 +128,7 @@ export const budgetRequestsAPI = {
   // AR APPROVAL - NEW METHOD
   async arApprove(id, remarks, by) {
     try {
-      console.log(`✅ AR Approving request:`, id);
+      console.log(`âœ… AR Approving request:`, id);
       const response = await fetch(`${API_URL}/budget-requests.php?id=${id}`, {
         method: 'PUT',
         headers: { 
@@ -142,10 +142,10 @@ export const budgetRequestsAPI = {
         })
       });
       const result = await handleResponse(response);
-      console.log("✅ Request approved by AR:", result);
+      console.log("âœ… Request approved by AR:", result);
       return result;
     } catch (error) {
-      console.error("❌ Error approving request (AR):", error);
+      console.error("âŒ Error approving request (AR):", error);
       throw error;
     }
   },
@@ -153,7 +153,7 @@ export const budgetRequestsAPI = {
   // DR APPROVAL - NEW METHOD
   async drApprove(id, remarks, by) {
     try {
-      console.log(`✅ DR Approving request:`, id);
+      console.log(`âœ… DR Approving request:`, id);
       const response = await fetch(`${API_URL}/budget-requests.php?id=${id}`, {
         method: 'PUT',
         headers: { 
@@ -167,10 +167,10 @@ export const budgetRequestsAPI = {
         })
       });
       const result = await handleResponse(response);
-      console.log("✅ Request approved by DR:", result);
+      console.log("âœ… Request approved by DR:", result);
       return result;
     } catch (error) {
-      console.error("❌ Error approving request (DR):", error);
+      console.error("âŒ Error approving request (DR):", error);
       throw error;
     }
   },
@@ -178,7 +178,7 @@ export const budgetRequestsAPI = {
   // AO2 APPROVAL - NEW METHOD
   async ao2Approve(id, remarks, by) {
     try {
-      console.log(`✅ AO2 Final Approving request:`, id);
+      console.log(`âœ… AO2 Final Approving request:`, id);
       const response = await fetch(`${API_URL}/budget-requests.php?id=${id}`, {
         method: 'PUT',
         headers: { 
@@ -192,17 +192,17 @@ export const budgetRequestsAPI = {
         })
       });
       const result = await handleResponse(response);
-      console.log("✅ Request FINAL approved by AO2:", result);
+      console.log("âœ… Request FINAL approved by AO2:", result);
       return result;
     } catch (error) {
-      console.error("❌ Error approving request (AO2):", error);
+      console.error("âŒ Error approving request (AO2):", error);
       throw error;
     }
   },
 
   async approve(id, stage, remarks, by) {
     try {
-      console.log(`✅ Approving request at ${stage}:`, id);
+      console.log(`âœ… Approving request at ${stage}:`, id);
       const response = await fetch(`${API_URL}/budget-requests.php?id=${id}`, {
         method: 'PUT',
         headers: { 
@@ -216,17 +216,17 @@ export const budgetRequestsAPI = {
         })
       });
       const result = await handleResponse(response);
-      console.log("✅ Request approved:", result);
+      console.log("âœ… Request approved:", result);
       return result;
     } catch (error) {
-      console.error("❌ Error approving request:", error);
+      console.error("âŒ Error approving request:", error);
       throw error;
     }
   },
 
   async reject(id, stage, remarks, by) {
     try {
-      console.log(`❌ Rejecting request at ${stage}:`, id);
+      console.log(`âŒ Rejecting request at ${stage}:`, id);
       const response = await fetch(`${API_URL}/budget-requests.php?id=${id}`, {
         method: 'PUT',
         headers: { 
@@ -240,25 +240,25 @@ export const budgetRequestsAPI = {
         })
       });
       const result = await handleResponse(response);
-      console.log("✅ Request rejected:", result);
+      console.log("âœ… Request rejected:", result);
       return result;
     } catch (error) {
-      console.error("❌ Error rejecting request:", error);
+      console.error("âŒ Error rejecting request:", error);
       throw error;
     }
   },
 
   async delete(id) {
     try {
-      console.log("🗑️ Deleting budget request:", id);
+      console.log("ðŸ—‘ï¸ Deleting budget request:", id);
       const response = await fetch(`${API_URL}/budget-requests.php?id=${id}`, {
         method: 'DELETE'
       });
       const result = await handleResponse(response);
-      console.log("✅ Budget request deleted:", result);
+      console.log("âœ… Budget request deleted:", result);
       return result;
     } catch (error) {
-      console.error("❌ Error deleting budget request:", error);
+      console.error("âŒ Error deleting budget request:", error);
       throw error;
     }
   }
@@ -272,29 +272,29 @@ export const projectAPI = {
       if (search) params.append('search', search);
       if (status && status !== 'all') params.append('status', status);
       
-      console.log("📡 GET: Fetching projects...");
+      console.log("ðŸ“¡ GET: Fetching projects...");
       const response = await fetch(`${API_URL}/projects.php?${params}`);
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error in getAll:", error);
+      console.error("âŒ Error in getAll:", error);
       throw error;
     }
   },
 
   async getById(id) {
     try {
-      console.log("📡 Fetching project:", id);
+      console.log("ðŸ“¡ Fetching project:", id);
       const response = await fetch(`${API_URL}/projects.php?id=${id}`);
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error fetching project:", error);
+      console.error("âŒ Error fetching project:", error);
       throw error;
     }
   },
 
   async create(data) {
     try {
-      console.log("🚀 POST: Creating project with data:", data);
+      console.log("ðŸš€ POST: Creating project with data:", data);
       const response = await fetch(`${API_URL}/projects.php`, {
         method: 'POST',
         headers: { 
@@ -305,14 +305,14 @@ export const projectAPI = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error in create:", error);
+      console.error("âŒ Error in create:", error);
       throw error;
     }
   },
 
   async update(id, data) {
     try {
-      console.log("🔄 Updating project:", id, data);
+      console.log("ðŸ”„ Updating project:", id, data);
       const response = await fetch(`${API_URL}/projects.php?id=${id}`, {
         method: 'PUT',
         headers: { 
@@ -322,20 +322,20 @@ export const projectAPI = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error updating project:", error);
+      console.error("âŒ Error updating project:", error);
       throw error;
     }
   },
 
   async delete(id) {
     try {
-      console.log("🗑️ Deleting project:", id);
+      console.log("ðŸ—‘ï¸ Deleting project:", id);
       const response = await fetch(`${API_URL}/projects.php?id=${id}`, {
         method: 'DELETE'
       });
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error deleting project:", error);
+      console.error("âŒ Error deleting project:", error);
       throw error;
     }
   }
@@ -347,7 +347,7 @@ export const projectHeadsAPI = {
       const response = await fetch(`${API_URL}/project-heads.php`);
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error fetching project heads:", error);
+      console.error("âŒ Error fetching project heads:", error);
       throw error;
     }
   },
@@ -361,7 +361,7 @@ export const projectHeadsAPI = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error creating project head:", error);
+      console.error("âŒ Error creating project head:", error);
       throw error;
     }
   },
@@ -375,7 +375,7 @@ export const projectHeadsAPI = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error updating project head:", error);
+      console.error("âŒ Error updating project head:", error);
       throw error;
     }
   },
@@ -387,7 +387,7 @@ export const projectHeadsAPI = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error deleting project head:", error);
+      console.error("âŒ Error deleting project head:", error);
       throw error;
     }
   }
@@ -399,7 +399,7 @@ export const departmentsAPI = {
       const response = await fetch(`${API_URL}/departments.php`);
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error fetching departments:", error);
+      console.error("âŒ Error fetching departments:", error);
       throw error;
     }
   },
@@ -413,7 +413,7 @@ export const departmentsAPI = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error creating department:", error);
+      console.error("âŒ Error creating department:", error);
       throw error;
     }
   },
@@ -427,7 +427,7 @@ export const departmentsAPI = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error updating department:", error);
+      console.error("âŒ Error updating department:", error);
       throw error;
     }
   },
@@ -439,7 +439,7 @@ export const departmentsAPI = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error deleting department:", error);
+      console.error("âŒ Error deleting department:", error);
       throw error;
     }
   }
@@ -456,7 +456,7 @@ export const principalInvestigatorsAPI = {
       const response = await fetch(`${API_URL}/principal-investigators.php?${params}`);
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error fetching PIs:", error);
+      console.error("âŒ Error fetching PIs:", error);
       throw error;
     }
   },
@@ -470,7 +470,7 @@ export const principalInvestigatorsAPI = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error creating PI:", error);
+      console.error("âŒ Error creating PI:", error);
       throw error;
     }
   },
@@ -484,7 +484,7 @@ export const principalInvestigatorsAPI = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error updating PI:", error);
+      console.error("âŒ Error updating PI:", error);
       throw error;
     }
   },
@@ -496,7 +496,7 @@ export const principalInvestigatorsAPI = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error deleting PI:", error);
+      console.error("âŒ Error deleting PI:", error);
       throw error;
     }
   }
@@ -508,7 +508,7 @@ export const releaseFundsAPI = {
       const response = await fetch(`${API_URL}/release-funds.php`);
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error fetching sanctioned projects:", error);
+      console.error("âŒ Error fetching sanctioned projects:", error);
       throw error;
     }
   },
@@ -522,7 +522,7 @@ export const releaseFundsAPI = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error releasing funds:", error);
+      console.error("âŒ Error releasing funds:", error);
       throw error;
     }
   },
@@ -534,7 +534,7 @@ export const releaseFundsAPI = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error("❌ Error deleting release:", error);
+      console.error("âŒ Error deleting release:", error);
       throw error;
     }
   }
@@ -542,12 +542,12 @@ export const releaseFundsAPI = {
 
 export const testBackendConnection = async () => {
   try {
-    console.log("🔍 Testing backend connection...");
+    console.log("ðŸ” Testing backend connection...");
     const response = await fetch(`${API_URL}/projects.php`);
-    console.log("✅ Backend response status:", response.status);
+    console.log("âœ… Backend response status:", response.status);
     return response.ok;
   } catch (error) {
-    console.error("❌ Backend is NOT reachable:", error);
+    console.error("âŒ Backend is NOT reachable:", error);
     return false;
   }
 };

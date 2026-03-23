@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ import { openProjectReport } from "./ProjectReportWindow";
 import { BookedAmountDialog } from "./BookedAmountDialog";
 import { ExpenditureDialog }  from "./ExpenditureDialog";
 
-const API = "https://ifms-backend-nitj.onrender.com/api";
+const API = import.meta.env.VITE_API_URL;
 
 const ModernManageProjects = () => {
   const [projects,         setProjects]         = useState([]);
@@ -74,7 +74,7 @@ const ModernManageProjects = () => {
           window.URL.revokeObjectURL(url); document.body.removeChild(a);
         } else { alert("Sanction letter not found"); }
       } else if (project.sanctionedLetterFile) {
-        const response = await fetch(`https://ifms-backend-nitj.onrender.com${project.sanctionedLetterFile}`);
+        const response = await fetch(`http://localhost:8000${project.sanctionedLetterFile}`);
         if (!response.ok) throw new Error("Failed to download file");
         const blob = await response.blob();
         const url  = window.URL.createObjectURL(blob);
@@ -104,7 +104,7 @@ const ModernManageProjects = () => {
     finally { setProcessingAction(null); }
   };
 
-  // Remaining = Released − Booked + (Booked − Actual)
+  // Remaining = Released âˆ’ Booked + (Booked âˆ’ Actual)
   const calcRemaining = (project) => {
     const released = parseFloat(project.totalReleasedAmount || 0);
     const booked   = parseFloat(project.amountBookedByPI    || 0);
@@ -127,13 +127,13 @@ const ModernManageProjects = () => {
   };
 
   const formatDate = (d) => {
-    if (!d) return "—";
+    if (!d) return "â€”";
     try { return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); }
     catch { return d; }
   };
 
   const calcDuration = (start, end) => {
-    if (!start || !end) return "—";
+    if (!start || !end) return "â€”";
     try {
       const days   = Math.ceil(Math.abs(new Date(end).getTime() - new Date(start).getTime()) / 86400000);
       const years  = Math.floor(days / 365);
@@ -142,7 +142,7 @@ const ModernManageProjects = () => {
       if (years  > 0) return `${years}yr`;
       if (months > 0) return `${months}mo`;
       return `${days}d`;
-    } catch { return "—"; }
+    } catch { return "â€”"; }
   };
 
   if (loading) {
@@ -221,10 +221,10 @@ const ModernManageProjects = () => {
                         {[
                           "S.No", "GP Number", "Project Name", "PI Name", "PI Email",
                           "Department", "Start Date", "End Date", "Duration",
-                          "Sanctioned (₹)", "Released (₹)",
-                          "Booked by PI (₹)", "Actual Exp. (₹)",
-                          "Remaining (₹)",
-                          "Yet to Release (₹)",
+                          "Sanctioned (â‚¹)", "Released (â‚¹)",
+                          "Booked by PI (â‚¹)", "Actual Exp. (â‚¹)",
+                          "Remaining (â‚¹)",
+                          "Yet to Release (â‚¹)",
                           "Bank", "Status", "Letter", "Actions",
                         ].map((h) => (
                           <TableHead
@@ -301,7 +301,7 @@ const ModernManageProjects = () => {
 
                             {/* PI Email */}
                             <TableCell className="py-3.5 px-4 text-xs text-gray-500">
-                              {project.piEmail || "—"}
+                              {project.piEmail || "â€”"}
                             </TableCell>
 
                             {/* Department */}
@@ -324,27 +324,27 @@ const ModernManageProjects = () => {
                               {calcDuration(project.projectStartDate, project.projectEndDate)}
                             </TableCell>
 
-                            {/* Sanctioned — fixed, never changes */}
+                            {/* Sanctioned â€” fixed, never changes */}
                             <TableCell className="py-3.5 px-4 text-sm text-gray-900 font-semibold text-right">
                               {parseFloat(project.totalSanctionedAmount || 0).toLocaleString("en-IN")}
                             </TableCell>
 
-                            {/* Released — fixed until next release */}
+                            {/* Released â€” fixed until next release */}
                             <TableCell className="py-3.5 px-4 text-sm text-emerald-700 font-semibold text-right">
                               {parseFloat(project.totalReleasedAmount || 0).toLocaleString("en-IN")}
                             </TableCell>
 
-                            {/* ── Booked by PI — clickable dialog ── */}
+                            {/* â”€â”€ Booked by PI â€” clickable dialog â”€â”€ */}
                             <TableCell className="py-3.5 px-4 text-right">
                               <BookedAmountDialog project={bookedDialogProject} />
                             </TableCell>
 
-                            {/* ── Actual Exp. — clickable dialog ── */}
+                            {/* â”€â”€ Actual Exp. â€” clickable dialog â”€â”€ */}
                             <TableCell className="py-3.5 px-4 text-right">
                               <ExpenditureDialog project={expenditureDialogProject} />
                             </TableCell>
 
-                            {/* Remaining = Released − Booked + (Booked − Actual) */}
+                            {/* Remaining = Released âˆ’ Booked + (Booked âˆ’ Actual) */}
                             <TableCell className="py-3.5 px-4 text-sm font-semibold text-right">
                               <span className={
                                 remaining <= 0   ? "text-gray-400" :
@@ -354,7 +354,7 @@ const ModernManageProjects = () => {
                               </span>
                             </TableCell>
 
-                            {/* Yet to Release = Sanctioned − Released */}
+                            {/* Yet to Release = Sanctioned âˆ’ Released */}
                             <TableCell className="py-3.5 px-4 text-sm text-amber-700 font-semibold text-right">
                               {yetToRelease.toLocaleString("en-IN")}
                             </TableCell>
@@ -379,10 +379,10 @@ const ModernManageProjects = () => {
                                   className="h-7 px-2.5 text-xs bg-gray-700 hover:bg-gray-800 text-white"
                                 >
                                   <Download className="h-3 w-3 mr-1" />
-                                  {downloadingFile === project.id ? "…" : "Letter"}
+                                  {downloadingFile === project.id ? "â€¦" : "Letter"}
                                 </Button>
                               ) : (
-                                <span className="text-xs text-gray-300">—</span>
+                                <span className="text-xs text-gray-300">â€”</span>
                               )}
                             </TableCell>
 
@@ -396,7 +396,7 @@ const ModernManageProjects = () => {
                                   onClick={() => handleViewReport(project)}
                                   className="h-7 px-2.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white border-0"
                                 >
-                                  Report ↗
+                                  Report â†—
                                 </Button>
 
                                 {/* Heads */}

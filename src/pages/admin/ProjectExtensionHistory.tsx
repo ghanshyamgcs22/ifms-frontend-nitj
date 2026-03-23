@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, FileText } from "lucide-react";
@@ -20,7 +20,7 @@ const ProjectExtensionHistory = ({ projectId, gpNumber }: ExtensionHistoryProps)
     try {
       setLoading(true);
       const response = await fetch(
-        `https://ifms-backend-nitj.onrender.com/api/extend-project.php?projectId=${projectId}`
+        `http://localhost:8000/api/extend-project.php?projectId=${projectId}`
       );
       const data = await response.json();
 
@@ -37,7 +37,7 @@ const ProjectExtensionHistory = ({ projectId, gpNumber }: ExtensionHistoryProps)
   };
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return "—";
+    if (!dateString) return "â€”";
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-GB', {

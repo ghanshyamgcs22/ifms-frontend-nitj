@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Upload } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -20,7 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface Head {
   id: string;
   headId: string;
@@ -40,6 +41,9 @@ interface Project {
   piName: string;
   piEmail: string;
   department: string;
+  material: string;
+  expenditure: string;
+  mode: string;
   totalSanctionedAmount: number;
   totalReleasedAmount: number;
   amountBookedByPI: number;
@@ -49,15 +53,15 @@ interface Project {
   heads: Head[];
 }
 
-// ── Auth — replace with your actual auth hook ──────────────────────────────────
+// â”€â”€ Auth â€” replace with your actual auth hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // const { user } = useAuth();
-const PI_EMAIL = "pi@ifms.edu";   // ← replace with auth context
-const PI_NAME  = "Dr. John Smith"; // ← replace with auth context
+const PI_EMAIL = "pi@ifms.edu";   // â† replace with auth context
+const PI_NAME  = "Dr. John Smith"; // â† replace with auth context
 
-const fmt = (n: number) => `₹${parseFloat(String(n || 0)).toLocaleString("en-IN")}`;
+const fmt = (n: number) => `â‚¹${parseFloat(String(n || 0)).toLocaleString("en-IN")}`;
 const fmtINR = (n: number) => parseFloat(String(n || 0)).toLocaleString("en-IN");
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const BookBudget = () => {
   const navigate = useNavigate();
 
@@ -67,17 +71,42 @@ const BookBudget = () => {
   const [selectedId,  setSelectedId]  = useState("");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedHead,    setSelectedHead]     = useState<Head | null>(null);
-
+const [quotation, setQuotation] = useState<File | null>(null);
   const [form, setForm] = useState({
     headId:       "",
     amount:       "",
     purpose:      "",
     description:  "",
+    material: "",
+    expenditure: "",
+    mode: "",
     invoiceNumber:"",
   });
-
+const [fileNumber, setFileNumber] = useState("");
   useEffect(() => { fetchProjects(); }, []);
 
+  
+  
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (e.target.files && e.target.files[0]) {
+    const file = e.target.files[0];
+
+    if (file.type !== "application/pdf") {
+      toast.error("Only PDF files allowed");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File must be less than 10MB");
+      return;
+    }
+
+    setQuotation(file);
+  
+};
+
+
+};
   // Update selectedProject whenever selectedId or projects changes
   useEffect(() => {
     const p = projects.find(p => p.id === selectedId) ?? null;
@@ -86,17 +115,45 @@ const BookBudget = () => {
     setForm(f => ({ ...f, headId: "", amount: "" }));
   }, [selectedId, projects]);
 
+  useEffect(() => {
+  const p = projects.find(p => p.id === selectedId) ?? null;
+  setSelectedProject(p);
+  setSelectedHead(null);
+  setForm(f => ({ ...f, headId: "", amount: "" }));
+
+  if (p) generateFileNumber(p.gpNumber);
+}, [selectedId, projects]);
+
+const generateFileNumber = async (gpNumber: string) => {
+  try {
+    const res = await fetch(`http://localhost:8000/api/get-next-file-num.php?gpNumber=${gpNumber}`);
+    const data = await res.json();
+
+    if (!data.success) throw new Error(data.message);
+
+    setFileNumber(data.fileNumber); // e.g., GP-001/FILE-03
+  } catch (e: any) {
+    toast.error("Failed to generate file number: " + e.message);
+  }
+};
   // Update selectedHead when headId changes
   useEffect(() => {
     if (!selectedProject || !form.headId) { setSelectedHead(null); return; }
     const h = selectedProject.heads.find(h => h.id === form.headId) ?? null;
     setSelectedHead(h);
   }, [form.headId, selectedProject]);
-
+const toBase64 = (file: File) => {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const res  = await fetch(`https://ifms-backend-nitj.onrender.com/api/get-pi-projects.php?piEmail=${PI_EMAIL}`);
+      const res  = await fetch(`http://localhost:8000/api/get-pi-projects.php?piEmail=${PI_EMAIL}`);
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
       // Only projects with released funds are returned by the backend
@@ -135,13 +192,13 @@ const BookBudget = () => {
     if (amount > selectedHead.availableBalance) {
       toast.error(
         `Amount exceeds available balance for "${selectedHead.headName}". ` +
-        `Available: ₹${fmtINR(selectedHead.availableBalance)}`
+        `Available: â‚¹${fmtINR(selectedHead.availableBalance)}`
       );
       return;
     }
     if (amount > selectedProject.availableBalance) {
       toast.error(
-        `Amount exceeds project available balance. Available: ₹${fmtINR(selectedProject.availableBalance)}`
+        `Amount exceeds project available balance. Available: â‚¹${fmtINR(selectedProject.availableBalance)}`
       );
       return;
     }
@@ -149,27 +206,45 @@ const BookBudget = () => {
     try {
       setSubmitting(true);
 
-      const payload = {
-        projectId:    selectedProject.id,
-        gpNumber:     selectedProject.gpNumber,
-        projectTitle: selectedProject.projectName,
-        projectType:  selectedProject.modeOfProject,
-        piName:       PI_NAME,
-        piEmail:      PI_EMAIL,
-        department:   selectedProject.department ?? "",
-        headId:       form.headId,
-        headName:     selectedHead.headName,
-        headType:     selectedHead.headType,
-        amount,
-        purpose:      form.purpose,
-        description:  form.description,
-        invoiceNumber:form.invoiceNumber,
-      };
+      if (!quotation) {
+  toast.error("Quotation file is required");
+  return;
+}
 
-      const res  = await fetch("https://ifms-backend-nitj.onrender.com/api/create-budget-requests.php", {
+let base64File = "";
+try {
+  base64File = await toBase64(quotation);
+} catch {
+  toast.error("File conversion failed");
+  return;
+}
+
+const payload = {
+  projectId: selectedProject.id,
+  gpNumber: selectedProject.gpNumber,
+  fileNumber: fileNumber,
+  projectTitle: selectedProject.projectName,
+  projectType: selectedProject.modeOfProject,
+  piName: PI_NAME,
+  piEmail: PI_EMAIL,
+  department: selectedProject.department ?? "",
+  headId: form.headId,
+  headName: selectedHead.headName,
+  headType: selectedHead.headType,
+  amount,
+  purpose: form.purpose,
+  description: form.description,
+  material: form.material,
+  invoiceNumber: form.invoiceNumber,
+
+  // âœ… FIXED
+  quotation: base64File,
+};
+      const res  = await fetch(`${import.meta.env.VITE_API_URL}/create-budget-requests.php`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify(payload),
+        
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
@@ -187,14 +262,14 @@ const BookBudget = () => {
     }
   };
 
-  // ── Loading ──────────────────────────────────────────────────────────────────
+  // â”€â”€ Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
-            <p className="mt-4 text-gray-600">Loading your projects…</p>
+            <p className="mt-4 text-gray-600">Loading your projectsâ€¦</p>
           </div>
         </div>
       </Layout>
@@ -205,7 +280,7 @@ const BookBudget = () => {
     <Layout>
       <div className="max-w-4xl mx-auto space-y-6 pb-12">
 
-        {/* ── Header ── */}
+        {/* â”€â”€ Header â”€â”€ */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-xl bg-blue-600 shadow-lg">
@@ -214,13 +289,13 @@ const BookBudget = () => {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Book Budget</h1>
               <p className="text-gray-600 mt-1">
-                Submit a budget booking request · DA → AR → DR approval chain
+                Submit a budget booking request Â· DA â†’ AR â†’ DR approval chain
               </p>
             </div>
           </div>
         </div>
 
-        {/* ── No projects message ── */}
+        {/* â”€â”€ No projects message â”€â”€ */}
         {projects.length === 0 && (
           <Card className="border-amber-200 bg-amber-50">
             <CardContent className="pt-6">
@@ -241,7 +316,7 @@ const BookBudget = () => {
           </Card>
         )}
 
-        {/* ── Form ── */}
+        {/* â”€â”€ Form â”€â”€ */}
         {projects.length > 0 && (
           <form onSubmit={handleSubmit}>
             <Card className="border-gray-200 shadow-sm">
@@ -253,7 +328,7 @@ const BookBudget = () => {
                   <div>
                     <CardTitle className="text-xl font-bold">Budget Booking Form</CardTitle>
                     <CardDescription>
-                      Fill in the details — your request goes through DA → AR → DR approval
+                      Fill in the details â€” your request goes through DA â†’ AR â†’ DR approval
                     </CardDescription>
                   </div>
                 </div>
@@ -261,10 +336,10 @@ const BookBudget = () => {
 
               <CardContent className="space-y-6 pt-6">
 
-                {/* ── Project selection ── */}
+                {/* â”€â”€ Project selection â”€â”€ */}
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold flex items-center gap-2">
-                    <span className="text-blue-600">⚡</span>
+                    <span className="text-blue-600">âš¡</span>
                     Select Project (GP Number) <span className="text-red-500">*</span>
                   </Label>
                   <Select value={selectedId} onValueChange={setSelectedId}>
@@ -275,14 +350,25 @@ const BookBudget = () => {
                       {projects.map(p => (
                         <SelectItem key={p.id} value={p.id}>
                           <span className="font-semibold">{p.gpNumber}</span>
-                          <span className="text-gray-500 ml-2">— {p.projectName}</span>
+                          <span className="text-gray-500 ml-2">â€” {p.projectName}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-
-                {/* ── Project-level balance card ── */}
+{fileNumber && (
+  <div className="space-y-2">
+    <Label className="text-sm font-semibold">
+      File Number
+    </Label>
+    <Input
+      value={fileNumber}
+      readOnly
+      className="border-2 h-12 bg-gray-100 font-semibold"
+    />
+  </div>
+)}
+                {/* â”€â”€ Project-level balance card â”€â”€ */}
                 {selectedProject && (
                   <Card className="bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 border-2 border-blue-200 shadow-md">
                     <CardContent className="pt-5 pb-4">
@@ -311,7 +397,7 @@ const BookBudget = () => {
                   </Card>
                 )}
 
-                {/* ── Head selection ── */}
+                {/* â”€â”€ Head selection â”€â”€ */}
                 {selectedProject && (
                   <div className="space-y-2">
                     <Label className="text-sm font-semibold">
@@ -332,7 +418,7 @@ const BookBudget = () => {
                             <SelectItem key={h.id} value={h.id}>
                               <span className="font-medium">{h.headName}</span>
                               <span className="text-xs text-gray-500 ml-2">
-                                ({h.headType}) — Available: ₹{fmtINR(h.availableBalance)}
+                                ({h.headType}) â€” Available: â‚¹{fmtINR(h.availableBalance)}
                               </span>
                             </SelectItem>
                           ))}
@@ -342,7 +428,7 @@ const BookBudget = () => {
                   </div>
                 )}
 
-                {/* ── Selected head detail card ── */}
+                {/* â”€â”€ Selected head detail card â”€â”€ */}
                 {selectedHead && (
                   <Card className="bg-blue-50 border border-blue-200">
                     <CardContent className="pt-4 pb-3">
@@ -362,26 +448,26 @@ const BookBudget = () => {
                       <div className="grid grid-cols-3 gap-4 text-sm">
                         <div>
                           <p className="text-gray-500 font-medium">Sanctioned</p>
-                          <p className="text-lg font-bold text-gray-900">₹{fmtINR(selectedHead.sanctionedAmount)}</p>
+                          <p className="text-lg font-bold text-gray-900">â‚¹{fmtINR(selectedHead.sanctionedAmount)}</p>
                         </div>
                         <div>
                           <p className="text-gray-500 font-medium">Released</p>
-                          <p className="text-lg font-bold text-blue-700">₹{fmtINR(selectedHead.releasedAmount)}</p>
+                          <p className="text-lg font-bold text-blue-700">â‚¹{fmtINR(selectedHead.releasedAmount)}</p>
                         </div>
                         <div>
                           <p className="text-gray-500 font-medium">Available to Book</p>
-                          <p className="text-lg font-bold text-green-700">₹{fmtINR(selectedHead.availableBalance)}</p>
+                          <p className="text-lg font-bold text-green-700">â‚¹{fmtINR(selectedHead.availableBalance)}</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 )}
 
-                {/* ── Amount ── */}
+                {/* â”€â”€ Amount â”€â”€ */}
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-green-600" />
-                    Amount (₹) <span className="text-red-500">*</span>
+                    Amount (â‚¹) <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     name="amount"
@@ -389,19 +475,19 @@ const BookBudget = () => {
                     step="0.01"
                     value={form.amount}
                     onChange={handleInput}
-                    placeholder={selectedHead ? `Max: ₹${fmtINR(selectedHead.availableBalance)}` : "Enter amount"}
+                    placeholder={selectedHead ? `Max: â‚¹${fmtINR(selectedHead.availableBalance)}` : "Enter amount"}
                     className="border-2 h-12 hover:border-green-500 focus:border-green-500 text-lg font-semibold"
                     required
                   />
                   {selectedHead && form.amount && parseFloat(form.amount) > selectedHead.availableBalance && (
                     <p className="text-xs text-red-600 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
-                      Exceeds available balance of ₹{fmtINR(selectedHead.availableBalance)}
+                      Exceeds available balance of â‚¹{fmtINR(selectedHead.availableBalance)}
                     </p>
                   )}
                 </div>
 
-                {/* ── Purpose ── */}
+                {/* â”€â”€ Purpose â”€â”€ */}
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">
                     Purpose <span className="text-red-500">*</span>
@@ -416,7 +502,7 @@ const BookBudget = () => {
                   />
                 </div>
 
-                {/* ── Description ── */}
+                {/* â”€â”€ Description â”€â”€ */}
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">
                     Detailed Description <span className="text-red-500">*</span>
@@ -431,8 +517,49 @@ const BookBudget = () => {
                     required
                   />
                 </div>
-
-                {/* ── Invoice number ── */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">
+                    Name of material to be purchased and Qty. <span className="text-red-500">*</span>
+                  </Label>
+                  <Textarea
+                    name="material"
+                    value={form.material}
+                    onChange={handleInput}
+                    placeholder="Material to be purchased and Qty. "
+                    rows={4}
+                    className="border-2 hover:border-blue-500 focus:border-blue-500 resize-none"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">
+                    Availability of Funds and head to which expenditure debitable <span className="text-red-500">*</span>
+                  </Label>
+                  <Textarea
+                    name="expenditure"
+                    value={form.expenditure}
+                    onChange={handleInput}
+                    placeholder="Availability of Funds and head to which expenditure debitable"
+                    rows={4}
+                    className="border-2 hover:border-blue-500 focus:border-blue-500 resize-none"
+                    required
+                  />
+                </div>
+<div className="space-y-2">
+                  <Label className="text-sm font-semibold">
+                  Mode of Procurement <span className="text-red-500">*</span>
+                  </Label>
+                  <Textarea
+                    name="mode"
+                    value={form.mode}
+                    onChange={handleInput}
+                    placeholder="Mode of Procurement"
+                    rows={4}
+                    className="border-2 hover:border-blue-500 focus:border-blue-500 resize-none"
+                    required
+                  />
+                </div>
+                {/* â”€â”€ Invoice number â”€â”€ */}
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold flex items-center gap-2">
                     <Receipt className="h-4 w-4 text-purple-600" />
@@ -447,8 +574,39 @@ const BookBudget = () => {
                     required
                   />
                 </div>
-
-                {/* ── Approval chain notice ── */}
+{/* File Upload */}
+              <div className="space-y-2">
+                <Label htmlFor="sanctionedLetterFile" className="text-sm font-medium text-gray-700">
+                  Upload Quotation (PDF only) <span className="text-red-500">*</span>
+                </Label>
+                <div className="flex items-center gap-4">
+                  <label
+                    htmlFor="sanctionedLetterFile"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md cursor-pointer transition-colors duration-200 font-medium shadow-sm"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Choose File
+                  </label>
+                  <input
+                    id="sanctionedLetterFile"
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  {quotation? (
+                    <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-md border border-green-200">
+                      <FileText className="h-4 w-4" />
+                      <span className="font-medium">{quotation.name}</span>
+                      <span className="text-gray-500">({quotation.size})</span>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-gray-500">No file chosen</span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">Maximum file size: 10MB</p>
+              </div>
+                {/* â”€â”€ Approval chain notice â”€â”€ */}
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
                   <p className="text-xs font-semibold text-slate-600 mb-2 flex items-center gap-1">
                     <CheckCircle className="h-3.5 w-3.5 text-slate-500" />
@@ -456,21 +614,21 @@ const BookBudget = () => {
                   </p>
                   <div className="flex items-center gap-2 text-xs text-slate-500">
                     <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium">You (PI)</span>
-                    <span>→</span>
+                    <span>â†’</span>
                     <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-medium">DA</span>
-                    <span>→</span>
+                    <span>â†’</span>
                     <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-medium">AR</span>
-                    <span>→</span>
+                    <span>â†’</span>
                     <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-medium">Director</span>
-                    <span>→</span>
-                    <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-medium">✅ Approved</span>
+                    <span>â†’</span>
+                    <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-medium">âœ… Approved</span>
                   </div>
                   <p className="text-xs text-slate-400 mt-1.5">
                     After final DR approval, the DA will record actual expenditure on receipt of hard copy.
                   </p>
                 </div>
 
-                {/* ── Buttons ── */}
+                {/* â”€â”€ Buttons â”€â”€ */}
                 <div className="flex gap-3 pt-4 border-t border-gray-200">
                   <Button
                     type="submit"
@@ -478,7 +636,7 @@ const BookBudget = () => {
                     className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 h-12 text-base font-semibold shadow-lg"
                   >
                     {submitting ? (
-                      <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Submitting…</>
+                      <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Submittingâ€¦</>
                     ) : (
                       <><Send className="h-5 w-5 mr-2" />Submit for Approval</>
                     )}
@@ -502,7 +660,7 @@ const BookBudget = () => {
   );
 };
 
-// ─── Small helper component ───────────────────────────────────────────────────
+// â”€â”€â”€ Small helper component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const BalanceStat = ({
   icon, label, value, color, highlight,
 }: { icon: React.ReactNode; label: string; value: string; color: string; highlight?: boolean }) => (
