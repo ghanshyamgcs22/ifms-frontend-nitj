@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || "https://ifms-backend-nitj.onrender.com/api";
 interface BudgetRequest {
   id: string; gpNumber: string; projectTitle: string; piName: string; department: string;
   purpose: string; description: string; amount: number; projectType: string;

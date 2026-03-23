@@ -16,7 +16,7 @@ import { Search, Clock, CheckCircle, Loader2, Lock, XCircle, RotateCcw, Eye, Fil
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || "https://ifms-backend-nitj.onrender.com/api";
 
 interface BudgetRequest {
   id: string; gpNumber: string; projectTitle: string; piName: string; department: string;

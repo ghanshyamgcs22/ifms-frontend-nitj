@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-const API      = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || "https://ifms-backend-nitj.onrender.com/api";
 const PI_EMAIL = "pi@ifms.edu";
 
 interface LatestQuery {
