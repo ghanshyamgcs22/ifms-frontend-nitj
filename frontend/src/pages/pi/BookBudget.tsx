@@ -126,7 +126,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
 const generateFileNumber = async (gpNumber: string) => {
   try {
-    const res = await fetch(`https://ifms-backend-nitj.onrender.com/api/get-next-file-num.php?gpNumber=${gpNumber}`);
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/get-next-file-num.php?gpNumber=${gpNumber}`);
     const data = await res.json();
 
     if (!data.success) throw new Error(data.message);
@@ -153,7 +153,7 @@ const toBase64 = (file: File) => {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const res  = await fetch(`https://ifms-backend-nitj.onrender.com/api/get-pi-projects.php?piEmail=${PI_EMAIL}`);
+      const res  = await fetch(`${import.meta.env.VITE_API_URL}/get-pi-projects.php?piEmail=${PI_EMAIL}`);
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
       // Only projects with released funds are returned by the backend

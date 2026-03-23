@@ -110,7 +110,7 @@ const Departments = () => {
             <AlertDescription>
               <strong>Error:</strong> {error}
               <br />
-              <span className="text-sm">Make sure backend is running on https://ifms-backend-nitj.onrender.com</span>
+              <span className="text-sm">Make sure backend is running on ${import.meta.env.VITE_API_URL.replace("/api", "")}</span>
             </AlertDescription>
           </Alert>
         )}

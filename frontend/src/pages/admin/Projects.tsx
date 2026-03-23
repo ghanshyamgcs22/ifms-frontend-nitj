@@ -74,7 +74,7 @@ const ModernManageProjects = () => {
           window.URL.revokeObjectURL(url); document.body.removeChild(a);
         } else { alert("Sanction letter not found"); }
       } else if (project.sanctionedLetterFile) {
-        const response = await fetch(`https://ifms-backend-nitj.onrender.com${project.sanctionedLetterFile}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL.replace("/api", "")}${project.sanctionedLetterFile}`);
         if (!response.ok) throw new Error("Failed to download file");
         const blob = await response.blob();
         const url  = window.URL.createObjectURL(blob);

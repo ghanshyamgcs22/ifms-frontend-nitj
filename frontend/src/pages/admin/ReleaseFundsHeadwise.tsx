@@ -80,7 +80,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
       setLoading(true);
       
       const response = await fetch(
-        `https://ifms-backend-nitj.onrender.com/api/fund-allocations.php?projectId=${project.id}`
+        `${import.meta.env.VITE_API_URL}/fund-allocations.php?projectId=${project.id}`
       );
       const data = await response.json();
 

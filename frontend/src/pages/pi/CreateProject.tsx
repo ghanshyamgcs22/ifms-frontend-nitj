@@ -100,7 +100,7 @@ const [coPIs, setCoPIs] = useState([
   const fetchPIsByDepartment = async (department, index) => {
   try {
     const res = await fetch(
-      `[localhost](https://ifms-backend-nitj.onrender.com/api/get-pi.php?department=${encodeURIComponent(department)})`
+      `[localhost](${import.meta.env.VITE_API_URL}/get-pi.php?department=${encodeURIComponent(department)})`
     );
     const data = await res.json();
     if (data.success) {
@@ -112,7 +112,7 @@ const [coPIs, setCoPIs] = useState([
 };
 useEffect(() => {
   if (formData.department) {
-    fetch(`https://ifms-backend-nitj.onrender.com/api/get-pi.php?department=${formData.department}`)
+    fetch(`${import.meta.env.VITE_API_URL}/get-pi.php?department=${formData.department}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) setPiList(data.data);
