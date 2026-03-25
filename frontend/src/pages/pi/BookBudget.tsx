@@ -1,676 +1,565 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Upload } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import {
-  Send, Wallet, FileText, Receipt, DollarSign,
-  TrendingUp, CheckCircle, Loader2, AlertCircle, Info,
+  Send, Loader2, AlertCircle, Upload, FileText,
+  CheckCircle2, ChevronRight, BookOpen,
+  ClipboardList, Paperclip,
 } from "lucide-react";
 import { toast } from "sonner";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+/* ── Font loader ─────────────────────────────────────────────────────── */
+const Fonts = () => {
+  useEffect(() => {
+    const el = document.createElement("link");
+    el.rel  = "stylesheet";
+    el.href = "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap";
+    document.head.appendChild(el);
+    return () => document.head.removeChild(el);
+  }, []);
+  return null;
+};
+
+/* ── Types ───────────────────────────────────────────────────────────── */
 interface Head {
-  id: string;
-  headId: string;
-  headName: string;
-  headType: string;
-  sanctionedAmount: number;
-  releasedAmount: number;
-  bookedAmount: number;
-  availableBalance: number;
+  id: string; headId: string; headName: string; headType: string;
+  sanctionedAmount: number; releasedAmount: number;
+  bookedAmount: number; availableBalance: number;
 }
-
 interface Project {
-  id: string;
-  gpNumber: string;
-  projectName: string;
-  modeOfProject: string;
-  piName: string;
-  piEmail: string;
-  department: string;
-  material: string;
-  expenditure: string;
-  mode: string;
-  totalSanctionedAmount: number;
-  totalReleasedAmount: number;
-  amountBookedByPI: number;
-  availableBalance: number;
-  actualExpenditure: number;
-  status: string;
-  heads: Head[];
+  id: string; gpNumber: string; projectName: string; modeOfProject: string;
+  piName: string; piEmail: string; department: string;
+  projectEndDate: string | null;
+  totalSanctionedAmount: number; totalReleasedAmount: number;
+  amountBookedByPI: number; availableBalance: number; actualExpenditure: number;
+  status: string; heads: Head[];
 }
 
-// ── Auth — replace with your actual auth hook ──────────────────────────────────
-// const { user } = useAuth();
-const PI_EMAIL = "pi@ifms.edu";   // ← replace with auth context
-const PI_NAME  = "Dr. John Smith"; // ← replace with auth context
+const PI_EMAIL = "pi@ifms.edu";
+const PI_NAME  = "Dr. John Smith";
+const API      = import.meta.env.VITE_API_URL;
 
-const fmt = (n: number) => `₹${parseFloat(String(n || 0)).toLocaleString("en-IN")}`;
-const fmtINR = (n: number) => parseFloat(String(n || 0)).toLocaleString("en-IN");
+const fmtINR = (n: number) =>
+  "₹" + parseFloat(String(n || 0)).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
+const fmtDate = (d: string | null) => {
+  if (!d) return "—";
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? d : dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+};
+
+/* ── Balance tile ────────────────────────────────────────────────────── */
+const BalTile = ({ label, value, color }: { label: string; value: string; color: "blue" | "amber" | "emerald" }) => {
+  const bar = { blue: "bg-blue-500", amber: "bg-amber-500", emerald: "bg-emerald-500" }[color];
+  return (
+    <div className="flex-1 rounded-xl bg-white border border-slate-200 overflow-hidden">
+      <div className={`h-[3px] ${bar}`}/>
+      <div className="px-3.5 py-3">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+        <p className="text-[14px] font-bold text-slate-800 mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+/* ── Field wrapper ───────────────────────────────────────────────────── */
+const Field = ({
+  label, required, hint, tag, children,
+}: {
+  label: string; required?: boolean; hint?: string;
+  tag?: React.ReactNode; children: React.ReactNode;
+}) => (
+  <div className="space-y-1.5">
+    <div className="flex items-center gap-2 flex-wrap">
+      <label className="text-[13px] font-semibold text-slate-700">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      {tag}
+    </div>
+    {hint && <p className="text-[11px] text-slate-400">{hint}</p>}
+    {children}
+  </div>
+);
+
+/* ── Read-only row ───────────────────────────────────────────────────── */
+const InfoRow = ({ label, value, mono }: { label: string; value: string; mono?: boolean }) => (
+  <div>
+    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">{label}</p>
+    <p
+      className="text-[13px] font-semibold text-slate-800 leading-snug"
+      style={{ fontFamily: mono ? "'JetBrains Mono', monospace" : "'Plus Jakarta Sans', sans-serif" }}
+    >
+      {value || "—"}
+    </p>
+  </div>
+);
+
+/* ── Pill tag ────────────────────────────────────────────────────────── */
+const Tag = ({ children, teal }: { children: React.ReactNode; teal?: boolean }) => (
+  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+    teal
+      ? "bg-teal-50 text-teal-700 border-teal-200"
+      : "bg-slate-100 text-slate-500 border-slate-200"
+  }`}>
+    {children}
+  </span>
+);
+
+/* ── Section card ────────────────────────────────────────────────────── */
+const Section = ({
+  icon: Icon, letter, title, sub, children,
+}: {
+  icon: any; letter: string; title: string; sub: string; children: React.ReactNode;
+}) => (
+  <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+    <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+      <div className="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center shrink-0">
+        <Icon className="h-4 w-4 text-white"/>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Part {letter}</p>
+        <p className="text-[15px] font-bold text-slate-800" style={{ fontFamily: "'Instrument Serif', serif" }}>
+          {title}
+        </p>
+      </div>
+      <p className="text-[11px] text-slate-400 hidden sm:block shrink-0">{sub}</p>
+    </div>
+    <div className="px-6 py-5 space-y-5">{children}</div>
+  </div>
+);
+
+/* ═══════════════════════════════════════════════════════════════════════ */
 const BookBudget = () => {
-  const navigate = useNavigate();
-
-  const [loading,     setLoading]     = useState(true);
-  const [submitting,  setSubmitting]  = useState(false);
-  const [projects,    setProjects]    = useState<Project[]>([]);
-  const [selectedId,  setSelectedId]  = useState("");
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [selectedHead,    setSelectedHead]     = useState<Head | null>(null);
-const [quotation, setQuotation] = useState<File | null>(null);
+  const navigate   = useNavigate();
+  const [loading,    setLoading]    = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [projects,   setProjects]   = useState<Project[]>([]);
+  const [selectedId, setSelectedId] = useState("");
+  const [proj,       setProj]       = useState<Project | null>(null);
+  const [head,       setHead]       = useState<Head | null>(null);
+  const [fileNumber, setFileNumber] = useState("");
+  const [quotation,  setQuotation]  = useState<File | null>(null);
   const [form, setForm] = useState({
-    headId:       "",
-    amount:       "",
-    purpose:      "",
-    description:  "",
-    material: "",
-    expenditure: "",
-    mode: "",
-    invoiceNumber:"",
+    headId: "", totalCost: "", material: "",
+    purpose: "", description: "", invoiceNumber: "", mode: "",
   });
-const [fileNumber, setFileNumber] = useState("");
+
   useEffect(() => { fetchProjects(); }, []);
-
-  
-  
-const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  if (e.target.files && e.target.files[0]) {
-    const file = e.target.files[0];
-
-    if (file.type !== "application/pdf") {
-      toast.error("Only PDF files allowed");
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File must be less than 10MB");
-      return;
-    }
-
-    setQuotation(file);
-  
-};
-
-
-};
-  // Update selectedProject whenever selectedId or projects changes
   useEffect(() => {
     const p = projects.find(p => p.id === selectedId) ?? null;
-    setSelectedProject(p);
-    setSelectedHead(null);
-    setForm(f => ({ ...f, headId: "", amount: "" }));
+    setProj(p); setHead(null);
+    setForm(f => ({ ...f, headId: "", totalCost: "" }));
+    if (p) generateFileNumber(p.gpNumber);
   }, [selectedId, projects]);
-
   useEffect(() => {
-  const p = projects.find(p => p.id === selectedId) ?? null;
-  setSelectedProject(p);
-  setSelectedHead(null);
-  setForm(f => ({ ...f, headId: "", amount: "" }));
+    if (!proj || !form.headId) { setHead(null); return; }
+    setHead(proj.heads.find(h => h.id === form.headId) ?? null);
+  }, [form.headId, proj]);
 
-  if (p) generateFileNumber(p.gpNumber);
-}, [selectedId, projects]);
-
-const generateFileNumber = async (gpNumber: string) => {
-  try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/get-next-file-num.php?gpNumber=${gpNumber}`);
-    const data = await res.json();
-
-    if (!data.success) throw new Error(data.message);
-
-    setFileNumber(data.fileNumber); // e.g., GP-001/FILE-03
-  } catch (e: any) {
-    toast.error("Failed to generate file number: " + e.message);
-  }
-};
-  // Update selectedHead when headId changes
-  useEffect(() => {
-    if (!selectedProject || !form.headId) { setSelectedHead(null); return; }
-    const h = selectedProject.heads.find(h => h.id === form.headId) ?? null;
-    setSelectedHead(h);
-  }, [form.headId, selectedProject]);
-const toBase64 = (file: File) => {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = error => reject(error);
-  });
-};
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const res  = await fetch(`${import.meta.env.VITE_API_URL}/get-pi-projects.php?piEmail=${PI_EMAIL}`);
+      const res  = await fetch(`${import.meta.env.VITE_API_URL}/api/get-pi-projects.php?piEmail=${PI_EMAIL}`);
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
-      // Only projects with released funds are returned by the backend
       setProjects(data.data || []);
-    } catch (e: any) {
-      toast.error("Failed to load projects: " + e.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e: any) { toast.error("Failed to load projects: " + e.message); }
+    finally { setLoading(false); }
+  };
+  const generateFileNumber = async (gpNumber: string) => {
+    try {
+      const res  = await fetch(`${import.meta.env.VITE_API_URL}/api/get-next-file-num.php?gpNumber=${encodeURIComponent(gpNumber)}`);
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      setFileNumber(data.fileNumber);
+    } catch (e: any) { toast.error("Failed to generate file number: " + e.message); }
   };
 
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const set = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") { toast.error("Only PDF files allowed"); return; }
+    if (file.size > 10 * 1024 * 1024)   { toast.error("File must be less than 10 MB"); return; }
+    setQuotation(file);
   };
 
-  const handleSelect = (name: string, value: string) => {
-    setForm(f => ({ ...f, [name]: value }));
-  };
+  const toBase64 = (file: File): Promise<string> => new Promise((res, rej) => {
+    const r = new FileReader(); r.readAsDataURL(file);
+    r.onload = () => res(r.result as string); r.onerror = rej;
+  });
 
-  // Heads that have available balance
-  const availableHeads = selectedProject?.heads.filter(h => h.availableBalance > 0) ?? [];
+  const availableHeads    = proj?.heads.filter(h => h.availableBalance > 0) ?? [];
+  const amount            = parseFloat(form.totalCost) || 0;
+  const amountExceedsHead = head && amount > head.availableBalance;
+  const amountExceedsProj = proj  && amount > proj.availableBalance;
+  const overLimit         = amountExceedsHead || amountExceedsProj;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!selectedProject)    { toast.error("Please select a project"); return; }
-    if (!form.headId)        { toast.error("Please select a project head"); return; }
-    if (!form.purpose.trim()){ toast.error("Please enter the purpose"); return; }
-    if (!form.description.trim()) { toast.error("Please enter a description"); return; }
-    if (!form.invoiceNumber.trim()){ toast.error("Please enter invoice number"); return; }
-
-    const amount = parseFloat(form.amount);
-    if (!amount || amount <= 0) { toast.error("Please enter a valid amount"); return; }
-
-    if (!selectedHead) { toast.error("Selected head not found"); return; }
-    if (amount > selectedHead.availableBalance) {
-      toast.error(
-        `Amount exceeds available balance for "${selectedHead.headName}". ` +
-        `Available: ₹${fmtINR(selectedHead.availableBalance)}`
-      );
-      return;
-    }
-    if (amount > selectedProject.availableBalance) {
-      toast.error(
-        `Amount exceeds project available balance. Available: ₹${fmtINR(selectedProject.availableBalance)}`
-      );
-      return;
-    }
+    if (!proj)                         { toast.error("Please select a project"); return; }
+    if (!form.headId)                  { toast.error("Please select a project head"); return; }
+    if (!form.totalCost || amount <= 0){ toast.error("Please enter the total cost"); return; }
+    if (!form.material.trim())         { toast.error("Please enter name of material and qty"); return; }
+    if (!form.purpose.trim())          { toast.error("Please enter the purpose"); return; }
+    if (!form.description.trim())      { toast.error("Please enter the detailed description"); return; }
+    if (!form.invoiceNumber.trim())    { toast.error("Please enter invoice / bill number"); return; }
+    if (!form.mode.trim())             { toast.error("Please enter mode of procurement"); return; }
+    if (!quotation)                    { toast.error("Quotation PDF is required"); return; }
+    if (!head)                         { toast.error("Selected head not found"); return; }
+    if (overLimit)                     { toast.error(`Amount exceeds available balance`); return; }
 
     try {
       setSubmitting(true);
+      let base64File = "";
+      try { base64File = await toBase64(quotation); }
+      catch { toast.error("File conversion failed"); return; }
 
-      if (!quotation) {
-  toast.error("Quotation file is required");
-  return;
-}
+      const payload = {
+        projectId: proj.id, gpNumber: proj.gpNumber, fileNumber,
+        projectTitle: proj.projectName, projectType: proj.modeOfProject,
+        piName: PI_NAME, piEmail: PI_EMAIL, department: proj.department ?? "",
+        headId: form.headId, headName: head.headName, headType: head.headType,
+        amount, purpose: form.purpose, description: form.description,
+        invoiceNumber: form.invoiceNumber, material: form.material,
+        expenditure: `Funds under "${head.headName}" (${head.headType}) for ${proj.gpNumber}. Available: ${fmtINR(head.availableBalance)}.`,
+        mode: form.mode, quotation: base64File, quotationName: quotation.name,
+        projectEndDate: proj.projectEndDate,
+      };
 
-let base64File = "";
-try {
-  base64File = await toBase64(quotation);
-} catch {
-  toast.error("File conversion failed");
-  return;
-}
-
-const payload = {
-  projectId: selectedProject.id,
-  gpNumber: selectedProject.gpNumber,
-  fileNumber: fileNumber,
-  projectTitle: selectedProject.projectName,
-  projectType: selectedProject.modeOfProject,
-  piName: PI_NAME,
-  piEmail: PI_EMAIL,
-  department: selectedProject.department ?? "",
-  headId: form.headId,
-  headName: selectedHead.headName,
-  headType: selectedHead.headType,
-  amount,
-  purpose: form.purpose,
-  description: form.description,
-  material: form.material,
-  invoiceNumber: form.invoiceNumber,
-
-  // ✅ FIXED
-  quotation: base64File,
-};
-      const res  = await fetch(`${import.meta.env.VITE_API_URL}/create-budget-requests.php`, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(payload),
-        
+      const res  = await fetch(`${API}/create-budget-requests.php`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
-
-      toast.success(
-        `Budget request submitted! Request #${data.data.requestNumber}. ` +
-        `Awaiting DA approval.`
-      );
+      toast.success(`Budget request submitted! #${data.data.requestNumber}`);
       navigate("/pi");
-
-    } catch (e: any) {
-      toast.error("Submission failed: " + e.message);
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (e: any) { toast.error("Submission failed: " + e.message); }
+    finally { setSubmitting(false); }
   };
 
-  // ── Loading ──────────────────────────────────────────────────────────────────
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
-            <p className="mt-4 text-gray-600">Loading your projects…</p>
-          </div>
+  const steps = ["You (PI)", "DA", "AR", "DR", "DRC Office", "DR (R&C)", "DRC", "Director"];
+
+  /* ── Loading ─────────────────────────────────────────────────────── */
+  if (loading) return (
+    <Layout>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-3 bg-[#f5f4f0]"
+        style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+        <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center">
+          <BookOpen className="h-5 w-5 text-white animate-pulse"/>
         </div>
-      </Layout>
-    );
-  }
+        <p className="text-sm font-semibold text-slate-500">Loading your projects…</p>
+      </div>
+    </Layout>
+  );
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto space-y-6 pb-12">
+      <Fonts/>
+      <div className="min-h-screen bg-[#f5f4f0]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
 
-        {/* ── Header ── */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-blue-600 shadow-lg">
-              <Wallet className="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Book Budget</h1>
-              <p className="text-gray-600 mt-1">
-                Submit a budget booking request · DA → AR → DR approval chain
-              </p>
+        {/* ══ Masthead ═════════════════════════════════════════════ */}
+        <div className="bg-slate-900">
+          <div className="max-w-2xl mx-auto px-5 pt-8 pb-6">
+            <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest mb-2">
+              Research &amp; Consultancy · Fund Utilisation
+            </p>
+            <h1 className="text-white text-[28px] font-bold leading-tight"
+              style={{ fontFamily: "'Instrument Serif', serif" }}>
+              Book Budget Request
+            </h1>
+            <p className="text-slate-400 text-sm mt-1.5">
+              Routed through 7 levels of approval after submission.
+            </p>
+
+            {/* Approval chain */}
+            <div className="mt-5 flex items-center gap-1 flex-wrap">
+              {steps.map((s, i) => (
+                <span key={i} className="flex items-center gap-1">
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg ${
+                    i === 0 ? "bg-amber-400 text-amber-900" : "bg-white/10 text-slate-300"
+                  }`}>{s}</span>
+                  {i < steps.length - 1 && <ChevronRight className="h-3 w-3 text-slate-600 shrink-0"/>}
+                </span>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* ── No projects message ── */}
-        {projects.length === 0 && (
-          <Card className="border-amber-200 bg-amber-50">
-            <CardContent className="pt-6">
-              <div className="text-center py-8">
-                <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  No Projects with Released Funds
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  None of your projects have released funds yet.
-                  Please wait for the admin to release funds.
-                </p>
-                <Button variant="outline" onClick={() => navigate("/pi")}>
-                  Back to Dashboard
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* ══ Content ══════════════════════════════════════════════ */}
+        <div className="max-w-2xl mx-auto px-5 py-6 space-y-4">
 
-        {/* ── Form ── */}
-        {projects.length > 0 && (
-          <form onSubmit={handleSubmit}>
-            <Card className="border-gray-200 shadow-sm">
-              <CardHeader className="bg-gray-50 border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-blue-100">
-                    <FileText className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl font-bold">Budget Booking Form</CardTitle>
-                    <CardDescription>
-                      Fill in the details — your request goes through DA → AR → DR approval
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
+          {/* No projects */}
+          {projects.length === 0 && (
+            <div className="rounded-2xl bg-white border border-amber-200 py-14 text-center space-y-3">
+              <AlertCircle className="h-9 w-9 text-amber-400 mx-auto"/>
+              <p className="font-bold text-slate-700 text-base">No projects with released funds</p>
+              <p className="text-sm text-slate-400">None of your projects have released funds yet.</p>
+              <button onClick={() => navigate("/pi")}
+                className="mt-1 px-5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition">
+                ← Back to Dashboard
+              </button>
+            </div>
+          )}
 
-              <CardContent className="space-y-6 pt-6">
+          {projects.length > 0 && (
+            <form onSubmit={handleSubmit} className="space-y-4">
 
-                {/* ── Project selection ── */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold flex items-center gap-2">
-                    <span className="text-blue-600">⚡</span>
-                    Select Project (GP Number) <span className="text-red-500">*</span>
-                  </Label>
+              {/* ── A: Project Details ─────────────────────────────── */}
+              <Section icon={BookOpen} letter="A" title="Project Details" sub="Auto-filled from database">
+
+                <Field label="Select Project" required>
                   <Select value={selectedId} onValueChange={setSelectedId}>
-                    <SelectTrigger className="border-2 h-12 hover:border-blue-500 transition-colors">
-                      <SelectValue placeholder="Choose a project" />
+                    <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-slate-50 text-sm focus:ring-0 focus:border-slate-400">
+                      <SelectValue placeholder="Choose project by GP Number…"/>
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-xl">
                       {projects.map(p => (
-                        <SelectItem key={p.id} value={p.id}>
-                          <span className="font-semibold">{p.gpNumber}</span>
-                          <span className="text-gray-500 ml-2">— {p.projectName}</span>
+                        <SelectItem key={p.id} value={p.id} className="py-2.5">
+                          <span className="font-bold text-slate-800" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{p.gpNumber}</span>
+                          <span className="text-slate-400 ml-2 text-xs">— {p.projectName}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-{fileNumber && (
-  <div className="space-y-2">
-    <Label className="text-sm font-semibold">
-      File Number
-    </Label>
-    <Input
-      value={fileNumber}
-      readOnly
-      className="border-2 h-12 bg-gray-100 font-semibold"
-    />
-  </div>
-)}
-                {/* ── Project-level balance card ── */}
-                {selectedProject && (
-                  <Card className="bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 border-2 border-blue-200 shadow-md">
-                    <CardContent className="pt-5 pb-4">
-                      <div className="grid gap-4 md:grid-cols-3">
-                        <BalanceStat
-                          icon={<DollarSign className="h-4 w-4 text-blue-600" />}
-                          label="Released Amount"
-                          value={fmt(selectedProject.totalReleasedAmount)}
-                          color="text-blue-600"
-                        />
-                        <BalanceStat
-                          icon={<Receipt className="h-4 w-4 text-amber-600" />}
-                          label="Already Booked"
-                          value={fmt(selectedProject.amountBookedByPI)}
-                          color="text-amber-600"
-                        />
-                        <BalanceStat
-                          icon={<TrendingUp className="h-4 w-4 text-green-600" />}
-                          label="Available Balance"
-                          value={fmt(selectedProject.availableBalance)}
-                          color="text-green-600"
-                          highlight
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                </Field>
 
-                {/* ── Head selection ── */}
-                {selectedProject && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold">
-                      Project Head <span className="text-red-500">*</span>
-                    </Label>
-                    {availableHeads.length === 0 ? (
-                      <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
-                        <AlertCircle className="h-4 w-4 shrink-0" />
-                        No heads with available balance in this project.
-                      </div>
-                    ) : (
-                      <Select value={form.headId} onValueChange={v => handleSelect("headId", v)}>
-                        <SelectTrigger className="border-2 h-12 hover:border-blue-500 transition-colors">
-                          <SelectValue placeholder="Select head" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableHeads.map(h => (
-                            <SelectItem key={h.id} value={h.id}>
-                              <span className="font-medium">{h.headName}</span>
-                              <span className="text-xs text-gray-500 ml-2">
-                                ({h.headType}) — Available: ₹{fmtINR(h.availableBalance)}
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                )}
-
-                {/* ── Selected head detail card ── */}
-                {selectedHead && (
-                  <Card className="bg-blue-50 border border-blue-200">
-                    <CardContent className="pt-4 pb-3">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Info className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-semibold text-blue-800">
-                          {selectedHead.headName}
-                        </span>
-                        <Badge variant="outline" className={`text-xs ${
-                          selectedHead.headType === "recurring"
-                            ? "bg-blue-100 text-blue-700 border-blue-300"
-                            : "bg-gray-100 text-gray-700 border-gray-300"
-                        }`}>
-                          {selectedHead.headType}
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <p className="text-gray-500 font-medium">Sanctioned</p>
-                          <p className="text-lg font-bold text-gray-900">₹{fmtINR(selectedHead.sanctionedAmount)}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-500 font-medium">Released</p>
-                          <p className="text-lg font-bold text-blue-700">₹{fmtINR(selectedHead.releasedAmount)}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-500 font-medium">Available to Book</p>
-                          <p className="text-lg font-bold text-green-700">₹{fmtINR(selectedHead.availableBalance)}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* ── Amount ── */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-green-600" />
-                    Amount (₹) <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    name="amount"
-                    type="number"
-                    step="0.01"
-                    value={form.amount}
-                    onChange={handleInput}
-                    placeholder={selectedHead ? `Max: ₹${fmtINR(selectedHead.availableBalance)}` : "Enter amount"}
-                    className="border-2 h-12 hover:border-green-500 focus:border-green-500 text-lg font-semibold"
-                    required
-                  />
-                  {selectedHead && form.amount && parseFloat(form.amount) > selectedHead.availableBalance && (
-                    <p className="text-xs text-red-600 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      Exceeds available balance of ₹{fmtINR(selectedHead.availableBalance)}
-                    </p>
-                  )}
-                </div>
-
-                {/* ── Purpose ── */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">
-                    Purpose <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    name="purpose"
-                    value={form.purpose}
-                    onChange={handleInput}
-                    placeholder="Brief purpose of expenditure"
-                    className="border-2 h-12 hover:border-blue-500 focus:border-blue-500"
-                    required
-                  />
-                </div>
-
-                {/* ── Description ── */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">
-                    Detailed Description <span className="text-red-500">*</span>
-                  </Label>
-                  <Textarea
-                    name="description"
-                    value={form.description}
-                    onChange={handleInput}
-                    placeholder="Provide detailed justification for the budget request"
-                    rows={4}
-                    className="border-2 hover:border-blue-500 focus:border-blue-500 resize-none"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">
-                    Name of material to be purchased and Qty. <span className="text-red-500">*</span>
-                  </Label>
-                  <Textarea
-                    name="material"
-                    value={form.material}
-                    onChange={handleInput}
-                    placeholder="Material to be purchased and Qty. "
-                    rows={4}
-                    className="border-2 hover:border-blue-500 focus:border-blue-500 resize-none"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">
-                    Availability of Funds and head to which expenditure debitable <span className="text-red-500">*</span>
-                  </Label>
-                  <Textarea
-                    name="expenditure"
-                    value={form.expenditure}
-                    onChange={handleInput}
-                    placeholder="Availability of Funds and head to which expenditure debitable"
-                    rows={4}
-                    className="border-2 hover:border-blue-500 focus:border-blue-500 resize-none"
-                    required
-                  />
-                </div>
-<div className="space-y-2">
-                  <Label className="text-sm font-semibold">
-                  Mode of Procurement <span className="text-red-500">*</span>
-                  </Label>
-                  <Textarea
-                    name="mode"
-                    value={form.mode}
-                    onChange={handleInput}
-                    placeholder="Mode of Procurement"
-                    rows={4}
-                    className="border-2 hover:border-blue-500 focus:border-blue-500 resize-none"
-                    required
-                  />
-                </div>
-                {/* ── Invoice number ── */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold flex items-center gap-2">
-                    <Receipt className="h-4 w-4 text-purple-600" />
-                    Invoice / Bill Number <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    name="invoiceNumber"
-                    value={form.invoiceNumber}
-                    onChange={handleInput}
-                    placeholder="INV-2025-001"
-                    className="border-2 h-12 hover:border-purple-500 focus:border-purple-500"
-                    required
-                  />
-                </div>
-{/* File Upload */}
-              <div className="space-y-2">
-                <Label htmlFor="sanctionedLetterFile" className="text-sm font-medium text-gray-700">
-                  Upload Quotation (PDF only) <span className="text-red-500">*</span>
-                </Label>
-                <div className="flex items-center gap-4">
-                  <label
-                    htmlFor="sanctionedLetterFile"
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md cursor-pointer transition-colors duration-200 font-medium shadow-sm"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Choose File
-                  </label>
-                  <input
-                    id="sanctionedLetterFile"
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  {quotation? (
-                    <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-md border border-green-200">
-                      <FileText className="h-4 w-4" />
-                      <span className="font-medium">{quotation.name}</span>
-                      <span className="text-gray-500">({quotation.size})</span>
+                {proj && (
+                  <>
+                    {/* Project info grid */}
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-xl bg-slate-50 border border-slate-100 p-4">
+                      <InfoRow label="Project Name" value={proj.projectName}/>
+                      <InfoRow label="Indentor"     value={`${PI_NAME}, ${proj.department}`}/>
+                      <InfoRow label="End Date"     value={fmtDate(proj.projectEndDate)}/>
+                      <InfoRow label="File Number"  value={fileNumber} mono/>
                     </div>
-                  ) : (
-                    <span className="text-sm text-gray-500">No file chosen</span>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500">Maximum file size: 10MB</p>
-              </div>
-                {/* ── Approval chain notice ── */}
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                  <p className="text-xs font-semibold text-slate-600 mb-2 flex items-center gap-1">
-                    <CheckCircle className="h-3.5 w-3.5 text-slate-500" />
-                    Approval Chain
-                  </p>
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium">You (PI)</span>
-                    <span>→</span>
-                    <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-medium">DA</span>
-                    <span>→</span>
-                    <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-medium">AR</span>
-                    <span>→</span>
-                    <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-medium">Director</span>
-                    <span>→</span>
-                    <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-medium">✅ Approved</span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1.5">
-                    After final DR approval, the DA will record actual expenditure on receipt of hard copy.
-                  </p>
-                </div>
 
-                {/* ── Buttons ── */}
-                <div className="flex gap-3 pt-4 border-t border-gray-200">
-                  <Button
-                    type="submit"
-                    disabled={submitting || !selectedProject || availableHeads.length === 0}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 h-12 text-base font-semibold shadow-lg"
+                    {/* Balance row */}
+                    <div className="flex gap-2.5">
+                      <BalTile label="Released"  value={fmtINR(proj.totalReleasedAmount)} color="blue"/>
+                      <BalTile label="Booked"    value={fmtINR(proj.amountBookedByPI)}    color="amber"/>
+                      <BalTile label="Available" value={fmtINR(proj.availableBalance)}    color="emerald"/>
+                    </div>
+
+                    {/* Head selector */}
+                    <Field label="Budget Head" required hint="Select the head under which this expenditure falls">
+                      {availableHeads.length === 0 ? (
+                        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+                          <AlertCircle className="h-4 w-4 shrink-0"/> No heads with available balance.
+                        </div>
+                      ) : (
+                        <>
+                          <Select value={form.headId} onValueChange={v => setForm(f => ({ ...f, headId: v }))}>
+                            <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-slate-50 text-sm focus:ring-0 focus:border-slate-400">
+                              <SelectValue placeholder="Select a budget head…"/>
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                              {availableHeads.map(h => (
+                                <SelectItem key={h.id} value={h.id} className="py-2.5">
+                                  <span className="font-semibold">{h.headName}</span>
+                                  <span className="text-xs text-slate-400 ml-2">({h.headType}) · {fmtINR(h.availableBalance)} avail.</span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {head && (
+                            <div className="flex gap-2.5 mt-3">
+                              <BalTile label="Sanctioned" value={fmtINR(head.sanctionedAmount)} color="blue"/>
+                              <BalTile label="Released"   value={fmtINR(head.releasedAmount)}   color="blue"/>
+                              <BalTile label="Available"  value={fmtINR(head.availableBalance)} color="emerald"/>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </Field>
+                  </>
+                )}
+              </Section>
+
+              {/* ── B: Purchase Details ───────────────────────────── */}
+              {proj && form.headId && (
+                <Section icon={ClipboardList} letter="B" title="Purchase Details" sub="Filled by Principal Investigator">
+
+                  {/* Total Cost — ONE field, prominent */}
+                  <Field
+                    label="Total Cost for Purchase"
+                    required
+                    hint={head ? `Max available under this head: ${fmtINR(head.availableBalance)}` : undefined}
                   >
-                    {submitting ? (
-                      <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Submitting…</>
-                    ) : (
-                      <><Send className="h-5 w-5 mr-2" />Submit for Approval</>
+                    <div className={`flex items-center rounded-xl border-2 overflow-hidden transition-colors ${
+                      overLimit
+                        ? "border-red-400 bg-red-50"
+                        : amount > 0
+                        ? "border-emerald-400 bg-emerald-50/30"
+                        : "border-slate-200 bg-white"
+                    }`}>
+                      <span className="px-4 text-slate-500 text-sm font-semibold select-none border-r border-slate-200 h-12 flex items-center"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}>₹</span>
+                      <input
+                        name="totalCost" type="number" step="0.01" min="0"
+                        value={form.totalCost} onChange={set}
+                        placeholder="0.00"
+                        className="flex-1 h-12 bg-transparent border-none outline-none text-lg font-bold text-slate-800 placeholder:text-slate-300 px-4"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        required
+                      />
+                      <span className="pr-4">
+                        {amount > 0 && !overLimit
+                          ? <CheckCircle2 className="h-5 w-5 text-emerald-500"/>
+                          : overLimit
+                          ? <AlertCircle className="h-5 w-5 text-red-400"/>
+                          : null}
+                      </span>
+                    </div>
+                    {overLimit && (
+                      <p className="text-xs text-red-600 flex items-center gap-1 mt-1.5">
+                        <AlertCircle className="h-3 w-3"/>
+                        Exceeds available balance of {fmtINR(head?.availableBalance ?? proj?.availableBalance ?? 0)}
+                      </p>
                     )}
-                  </Button>
-                  <Button
+                  </Field>
+
+                  {/* Material & Qty */}
+                  <Field
+                    label="Name of Material & Quantity"
+                    required
+                    tag={<Tag>Locked after submission</Tag>}
+                  >
+                    <Textarea
+                      name="material" value={form.material} onChange={set}
+                      placeholder="e.g. Lab chemicals × 5 kg, Glassware set × 10 units"
+                      rows={3}
+                      className="rounded-xl border-slate-200 bg-slate-50 text-sm focus:border-slate-400 focus:ring-0 resize-none"
+                      required
+                    />
+                  </Field>
+
+                  {/* Purpose */}
+                  <Field label="Purpose" required>
+                    <Input
+                      name="purpose" value={form.purpose} onChange={set}
+                      placeholder="Brief purpose of this expenditure"
+                      className="h-11 rounded-xl border-slate-200 bg-slate-50 text-sm focus:border-slate-400 focus:ring-0"
+                      required
+                    />
+                  </Field>
+
+                  {/* Description */}
+                  <Field label="Detailed Description" required>
+                    <Textarea
+                      name="description" value={form.description} onChange={set}
+                      placeholder="Provide a detailed justification for this budget request"
+                      rows={4}
+                      className="rounded-xl border-slate-200 bg-slate-50 text-sm focus:border-slate-400 focus:ring-0 resize-none"
+                      required
+                    />
+                  </Field>
+
+                  {/* Invoice No */}
+                  <Field label="Invoice / Bill Number" required>
+                    <Input
+                      name="invoiceNumber" value={form.invoiceNumber} onChange={set}
+                      placeholder="e.g. INV-2025-001"
+                      className="h-11 rounded-xl border-slate-200 bg-slate-50 text-sm focus:border-slate-400 focus:ring-0"
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      required
+                    />
+                  </Field>
+
+                  {/* Mode of Procurement */}
+                  <Field
+                    label="Mode of Procurement"
+                    required
+                    tag={<Tag teal>DR (R&C) / DRC may update</Tag>}
+                  >
+                    <Textarea
+                      name="mode" value={form.mode} onChange={set}
+                      placeholder="e.g. Direct purchase / GeM portal / Open tender / Limited tender"
+                      rows={2}
+                      className="rounded-xl border-slate-200 bg-slate-50 text-sm focus:border-slate-400 focus:ring-0 resize-none"
+                      required
+                    />
+                  </Field>
+                </Section>
+              )}
+
+              {/* ── C: Supporting Document ────────────────────────── */}
+              {proj && form.headId && (
+                <Section icon={Paperclip} letter="C" title="Supporting Document" sub="Mandatory PDF upload">
+                  <label htmlFor="quotationFile"
+                    className={`flex items-center gap-4 w-full cursor-pointer rounded-xl border-2 border-dashed px-5 py-4 transition-all select-none ${
+                      quotation
+                        ? "border-emerald-400 bg-emerald-50/40"
+                        : "border-slate-200 bg-slate-50 hover:border-slate-400 hover:bg-white"
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                      quotation ? "bg-emerald-100" : "bg-white border border-slate-200"
+                    }`}>
+                      {quotation
+                        ? <FileText className="h-5 w-5 text-emerald-600"/>
+                        : <Upload className="h-5 w-5 text-slate-400"/>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {quotation ? (
+                        <>
+                          <p className="text-sm font-semibold text-emerald-700 truncate">{quotation.name}</p>
+                          <p className="text-xs text-emerald-500 mt-0.5">{(quotation.size / 1024).toFixed(1)} KB · PDF</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm font-semibold text-slate-700">Upload Quotation PDF</p>
+                          <p className="text-xs text-slate-400 mt-0.5">PDF only · max 10 MB</p>
+                        </>
+                      )}
+                    </div>
+                    {quotation && (
+                      <span className="text-[11px] font-semibold text-emerald-700 border border-emerald-300 bg-white px-3 py-1 rounded-lg shrink-0">
+                        Replace
+                      </span>
+                    )}
+                    <input id="quotationFile" type="file" accept=".pdf" onChange={handleFile} className="hidden"/>
+                  </label>
+                </Section>
+              )}
+
+              {/* ── Submit ────────────────────────────────────────── */}
+              {proj && form.headId && (
+                <div className="flex gap-3 pt-1 pb-8">
+                  <button
+                    type="submit"
+                    disabled={submitting || availableHeads.length === 0 || !!overLimit}
+                    className="flex-1 h-12 rounded-xl bg-slate-900 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors shadow-md"
+                  >
+                    {submitting
+                      ? <><Loader2 className="h-4 w-4 animate-spin"/> Submitting…</>
+                      : <><Send className="h-4 w-4"/> Submit for Approval</>}
+                  </button>
+                  <button
                     type="button"
-                    variant="outline"
                     onClick={() => navigate("/pi")}
-                    className="h-12 px-8 border-2 hover:border-red-400 hover:text-red-600"
+                    className="h-12 px-6 rounded-xl border-2 border-slate-200 bg-white text-slate-600 hover:border-red-300 hover:text-red-600 text-sm font-semibold transition-colors"
                   >
                     Cancel
-                  </Button>
+                  </button>
                 </div>
+              )}
 
-              </CardContent>
-            </Card>
-          </form>
-        )}
+            </form>
+          )}
+        </div>
       </div>
     </Layout>
   );
 };
-
-// ─── Small helper component ───────────────────────────────────────────────────
-const BalanceStat = ({
-  icon, label, value, color, highlight,
-}: { icon: React.ReactNode; label: string; value: string; color: string; highlight?: boolean }) => (
-  <div className="space-y-1">
-    <div className="flex items-center gap-2 text-gray-600">
-      {icon}
-      <p className="font-semibold text-sm">{label}</p>
-    </div>
-    <p className={`text-3xl font-bold ${color} ${highlight ? "animate-pulse" : ""}`}>{value}</p>
-  </div>
-);
 
 export default BookBudget;

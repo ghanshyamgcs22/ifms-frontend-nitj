@@ -1,11 +1,11 @@
-/**
+﻿/**
  * ProjectReportWindow.jsx  v2
  * Full institutional project report with:
  *  - Correct fund release history (from fund_releases collection)
  *  - Per-release booking sections
  *  - effectiveAmount logic (actual if DA filled, else booked)
  *  - Actual expenditure per row with timestamp when DA entered it
- *  - Available balance = Released − Effective Booked
+ *  - Available balance = Released âˆ’ Effective Booked
  */
 
 const INR = (n) =>
@@ -74,7 +74,7 @@ const buildReportHTML = (data) => {
       ${sub ? `<div style="font-size:10px;color:#6b7280;margin-top:2px;">${esc(sub)}</div>` : ""}
     </div>`;
 
-  /* ── SECTION 2: Fund Release History ──────────────────────────────────── */
+  /* â”€â”€ SECTION 2: Fund Release History â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const releaseHistoryHTML = (releases) => {
     if (!releases || releases.length === 0)
       return `<p style="font-size:12px;color:#6b7280;font-style:italic;">No fund releases recorded.</p>`;
@@ -125,7 +125,7 @@ const buildReportHTML = (data) => {
       </table>`;
   };
 
-  /* ── SECTION 4: Per-release booking groups ──────────────────────────────── */
+  /* â”€â”€ SECTION 4: Per-release booking groups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const releaseGroupsHTML = (groups) => {
     if (!groups || groups.length === 0)
       return `<p style="font-size:12px;color:#6b7280;font-style:italic;">No approved bookings found.</p>`;
@@ -198,7 +198,7 @@ const buildReportHTML = (data) => {
     }).join("");
   };
 
-  /* ── SECTION 5: Head-wise summary ────────────────────────────────────────── */
+  /* â”€â”€ SECTION 5: Head-wise summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const headSection = (alloc, hIdx) => {
     const relRows = (alloc.releases||[]).map((r,i) => `
       <tr style="background:${i%2===0?"#fff":"#f8fafc"};">
@@ -283,7 +283,7 @@ const buildReportHTML = (data) => {
       </div>`;
   };
 
-  /* ── EXTENSIONS ─────────────────────────────────────────────────────────── */
+  /* â”€â”€ EXTENSIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const extensionSection = (exts) => {
     if (exts.length === 0)
       return `<p style="font-size:12px;color:#6b7280;font-style:italic;">No extensions granted.</p>`;
@@ -309,7 +309,7 @@ const buildReportHTML = (data) => {
       </table>`;
   };
 
-  /* ── FULL PAGE ─────────────────────────────────────────────────────────── */
+  /* â”€â”€ FULL PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -397,7 +397,7 @@ body { font-family:Georgia,'Times New Roman',serif; background:#eef1f5; color:#1
       ${amtBox("Total Released",amt(summary.totalReleased),`Pending: ${amt(summary.unreleasedAmount)}`)}
       ${amtBox("Total Booked (Effective)",amt(summary.totalBooked),"Based on effectiveAmount")}
       ${amtBox("Actual Expenditure (DA)",amt(summary.totalActual))}
-      ${amtBox("Available Balance",amt(summary.piBalance),"Released − Booked",true)}
+      ${amtBox("Available Balance",amt(summary.piBalance),"Released âˆ’ Booked",true)}
       ${amtBox("Utilisation Rate",summary.utilizationPct+"%",`${summary.approvedRequests} approved / ${summary.pendingRequests} pending / ${summary.rejectedRequests} rejected`)}
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:12px;">
@@ -409,7 +409,7 @@ body { font-family:Georgia,'Times New Roman',serif; background:#eef1f5; color:#1
           ["Unreleased (Pending Release)",               amt(summary.unreleasedAmount)],
           ["Total Booked (Effective — actual where filled)", amt(summary.totalBooked)],
           ["Actual Expenditure (DA Entered)",            amt(summary.totalActual)],
-          ["Available Balance (Released − Booked)",     amt(summary.piBalance)],
+          ["Available Balance (Released âˆ’ Booked)",     amt(summary.piBalance)],
           ["Utilisation %",                              summary.utilizationPct+"%"],
           ["Total Budget Requests",                      String(summary.totalRequests)],
           ["Approved / Pending / Rejected",              `${summary.approvedRequests} / ${summary.pendingRequests} / ${summary.rejectedRequests}`],
@@ -621,7 +621,7 @@ function loadScript(src) {
 </html>`;
 };
 
-/* ─── Public API ─────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export const openProjectReport = async (project) => {
   const win = window.open("","_blank","width=1200,height=900,scrollbars=yes,resizable=yes");
   if (!win) { alert("Popup blocked. Please allow popups for this site."); return; }
@@ -636,7 +636,7 @@ export const openProjectReport = async (project) => {
   win.document.close();
 
   try {
-    const res  = await fetch(`${import.meta.env.VITE_API_URL}/get-project-report.php?projectId=${project.id}`);
+    const res  = await fetch(`{import.meta.env.VITE_API_URL}/api/get-project-report.php?projectId=${project.id}`);
     const json = await res.json();
     if (!json.success) throw new Error(json.message || "Server error");
     const html = buildReportHTML(json.data);

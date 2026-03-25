@@ -63,7 +63,7 @@ const fmtDate = (d: string | null) =>
         month: "short",
         year: "numeric",
       })
-    : "—";
+    : "—;
 
 // ─────────────────────────────────────────────────────────────────────────────
 export const ProjectViewDialog = ({ open, onClose, project, loading }: Props) => {
@@ -225,10 +225,10 @@ export const ProjectViewDialog = ({ open, onClose, project, loading }: Props) =>
                                   {req.requestNumber || req.requestId.slice(-6).toUpperCase()}
                                 </td>
                                 <td className="px-4 py-3 text-xs text-gray-600 max-w-[140px] truncate">
-                                  {req.purpose || "—"}
+                                  {req.purpose || "—}
                                 </td>
                                 <td className="px-4 py-3 text-xs font-mono text-gray-500 whitespace-nowrap">
-                                  {req.invoiceNumber || "—"}
+                                  {req.invoiceNumber || "—}
                                 </td>
                                 <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                                   {fmtDate(req.createdAt)}

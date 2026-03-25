@@ -1,4 +1,4 @@
-// BookedAmountDialog.tsx  v4
+﻿// BookedAmountDialog.tsx  v4
 // Shows booking register grouped by fund release installment.
 // Each release = separate collapsible section with its own heads/requests.
 // Grand total booked never exceeds totalReleasedAmount.
@@ -11,7 +11,7 @@ import { CheckCircle2, Clock, ChevronDown, ChevronRight, Loader2, Banknote } fro
 
 const API = import.meta.env.VITE_API_URL;
 
-// ── Types ──────────────────────────────────────────────────────────────────────
+
 interface RequestRow {
   requestId: string;
   requestNumber: string;
@@ -67,7 +67,7 @@ const fmtINR = (n: number) =>
 const fmtDate = (d: string | null) =>
   d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
-// ── Component ─────────────────────────────────────────────────────────────────
+
 export const BookedAmountDialog = ({ project }: Props) => {
   const [open,             setOpen]             = useState(false);
   const [loading,          setLoading]          = useState(false);
@@ -130,7 +130,7 @@ export const BookedAmountDialog = ({ project }: Props) => {
             <div className="flex items-start justify-between gap-6">
               <div className="flex-1 min-w-0">
                 <p className="text-[9px] font-mono font-semibold text-slate-400 tracking-[0.2em] uppercase mb-1.5">
-                  {project.gpNumber} · Booking Register
+                  {project.gpNumber} Â· Booking Register
                 </p>
                 <DialogTitle className="text-lg font-bold text-slate-900 leading-snug">
                   {project.projectName}
@@ -154,7 +154,7 @@ export const BookedAmountDialog = ({ project }: Props) => {
             {[
               { label: "Total Released",    value: fmtINR(released),  note: "Authorised funds" },
               { label: "Total Booked",      value: fmtINR(booked),    note: "Effective across all releases" },
-              { label: "Available Balance", value: fmtINR(remaining), note: "Released − Booked" },
+              { label: "Available Balance", value: fmtINR(remaining), note: "Released âˆ’ Booked" },
             ].map((c, i) => (
               <div key={c.label} className="px-6 py-4">
                 <p className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 mb-1.5">{c.label}</p>
@@ -169,13 +169,13 @@ export const BookedAmountDialog = ({ project }: Props) => {
           {/* Body */}
           <div className="px-8 py-6 space-y-5">
             <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-slate-400">
-              Release-wise · Booking Ledger
+              Release-wise Â· Booking Ledger
             </p>
 
             {loading ? (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="h-5 w-5 animate-spin text-slate-300 mr-3" />
-                <span className="text-sm text-slate-400">Loading bookings…</span>
+                <span className="text-sm text-slate-400">Loading bookings—¦</span>
               </div>
             ) : releases.length === 0 ? (
               <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl">
@@ -191,7 +191,7 @@ export const BookedAmountDialog = ({ project }: Props) => {
                 return (
                   <div key={rel.releaseId} className="border border-slate-200 rounded-xl overflow-hidden">
 
-                    {/* ── Release header ── */}
+                    {/* â”€â”€ Release header â”€â”€ */}
                     <button
                       onClick={() => toggleRelease(rel.releaseId)}
                       className="w-full flex items-center gap-4 px-5 py-4 bg-slate-800 hover:bg-slate-700 transition-colors text-left"
@@ -207,7 +207,7 @@ export const BookedAmountDialog = ({ project }: Props) => {
                         </p>
                         <p className="text-[9px] text-slate-400 mt-0.5 uppercase tracking-wider">
                           {rel.letterDate ? `Letter Date: ${fmtDate(rel.letterDate)}` : ""}
-                          {rel.letterNumber ? ` · Ref: ${rel.letterNumber}` : ""}
+                          {rel.letterNumber ? ` Â· Ref: ${rel.letterNumber}` : ""}
                         </p>
                       </div>
                       <div className="flex items-center gap-8 shrink-0">
@@ -230,7 +230,7 @@ export const BookedAmountDialog = ({ project }: Props) => {
                       <div className="h-full bg-emerald-500" style={{ width: `${relUsedPct}%` }} />
                     </div>
 
-                    {/* ── Heads under this release ── */}
+                    {/* â”€â”€ Heads under this release â”€â”€ */}
                     {relExpanded && (
                       <div className="divide-y divide-slate-100">
                         {rel.heads.map((head, hi) => {
@@ -254,10 +254,10 @@ export const BookedAmountDialog = ({ project }: Props) => {
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-semibold text-slate-800">{head.headName}</p>
                                   <p className="text-[9px] text-slate-400 uppercase tracking-wider">
-                                    {head.headType} · {head.requests.length} booking{head.requests.length !== 1 ? "s" : ""}
+                                    {head.headType} Â· {head.requests.length} booking{head.requests.length !== 1 ? "s" : ""}
                                     {head.requests.filter(r => r.isSettled).length > 0 && (
                                       <span className="ml-1 text-emerald-600">
-                                        · {head.requests.filter(r => r.isSettled).length} settled
+                                        Â· {head.requests.filter(r => r.isSettled).length} settled
                                       </span>
                                     )}
                                   </p>
@@ -318,7 +318,7 @@ export const BookedAmountDialog = ({ project }: Props) => {
                                           </span>
                                           {req.isSettled && req.bookedAmount !== req.actualAmount && (
                                             <span className="ml-1 text-[8px] text-emerald-600">
-                                              ↓{fmtINR(req.bookedAmount - req.actualAmount)} returned
+                                              →“{fmtINR(req.bookedAmount - req.actualAmount)} returned
                                             </span>
                                           )}
                                         </td>
@@ -335,7 +335,7 @@ export const BookedAmountDialog = ({ project }: Props) => {
                                   <tfoot>
                                     <tr className="border-t-2 border-slate-200 bg-slate-50">
                                       <td colSpan={5} className="px-3 py-2 text-[9px] font-bold uppercase tracking-widest text-slate-500">
-                                        Total · {head.headName}
+                                        Total Â· {head.headName}
                                       </td>
                                       <td className="px-3 py-2 text-xs font-black font-mono text-slate-600 text-right">
                                         {fmtINR(head.requests.reduce((s, r) => s + r.bookedAmount, 0))}
@@ -391,7 +391,7 @@ export const BookedAmountDialog = ({ project }: Props) => {
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Grand Total — All Releases</p>
                   <p className="text-[9px] text-slate-600 mt-0.5 font-mono">
-                    {releases.length} release{releases.length !== 1 ? "s" : ""} · Booked ≤ Released always
+                    {releases.length} release{releases.length !== 1 ? "s" : ""} Â· Booked ≤ Released always
                   </p>
                 </div>
                 <div className="flex items-center gap-12">

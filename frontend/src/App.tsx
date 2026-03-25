@@ -1,7 +1,7 @@
 // App.tsx — full routing with corrected DRC chain
 //
 // ≤ ₹25k:  DA → AR → DR (final approve)
-// > ₹25k:  DA → AR → DR → DRC Office → DRC (R&C) → DRC → Director (final approve)
+// > ₹25k:  DA → AR → DR → DRC Office → DR (R&C) → DRC → Director (final approve)
 
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";

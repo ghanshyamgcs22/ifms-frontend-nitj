@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -100,7 +100,7 @@ const [coPIs, setCoPIs] = useState([
   const fetchPIsByDepartment = async (department, index) => {
   try {
     const res = await fetch(
-      `[localhost](${import.meta.env.VITE_API_URL}/get-pi.php?department=${encodeURIComponent(department)})`
+      `[localhost](${import.meta.env.VITE_API_URL}/api/get-pi.php?department=${encodeURIComponent(department)})`
     );
     const data = await res.json();
     if (data.success) {
@@ -112,7 +112,7 @@ const [coPIs, setCoPIs] = useState([
 };
 useEffect(() => {
   if (formData.department) {
-    fetch(`${import.meta.env.VITE_API_URL}/get-pi.php?department=${formData.department}`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/get-pi.php?department=${formData.department}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) setPiList(data.data);
@@ -942,7 +942,7 @@ useEffect(() => {
                           </span>
                           {allocation.isConfirmed && (
                             <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">
-                              ✓ Confirmed
+                              âœ“ Confirmed
                             </span>
                           )}
                         </div>

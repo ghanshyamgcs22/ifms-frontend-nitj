@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -80,7 +80,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
       setLoading(true);
       
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/fund-allocations.php?projectId=${project.id}`
+        `${import.meta.env.VITE_API_URL}/api/fund-allocations.php?projectId=${project.id}`
       );
       const data = await response.json();
 
@@ -271,12 +271,12 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
   letterDate: format(letterDate, "yyyy-MM-dd"),
   letterNumber: letterNumber.trim(),
   remarks: remarks.trim(),
-  releasedBy: "Admin",                    // ← ADD THIS (PHP reads releasedBy)
-  releases: allocationsToRelease.map(alloc => ({   // ← was "headwiseReleases"
+  releasedBy: "Admin",                    // → ADD THIS (PHP reads releasedBy)
+  releases: allocationsToRelease.map(alloc => ({   // → was "headwiseReleases"
     headId: alloc.headId,
     headName: alloc.headName,
     headType: alloc.headType,
-    amount: parseFloat(alloc.releaseAmount),        // ← was "releaseAmount", PHP reads "amount"
+    amount: parseFloat(alloc.releaseAmount),        // → was "releaseAmount", PHP reads "amount"
   })),
 };
 
@@ -323,7 +323,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
 
   const getStatusBadge = (allocation) => {
     if (allocation.isConfirmed && parseFloat(allocation.releaseAmount) > 0) {
-      return <Badge className="bg-green-50 text-green-700 border-green-200">✓ Confirmed</Badge>;
+      return <Badge className="bg-green-50 text-green-700 border-green-200">âœ“ Confirmed</Badge>;
     }
     if (parseFloat(allocation.releaseAmount) > 0) {
       return <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
@@ -416,7 +416,7 @@ const ReleaseFundsHeadwise = ({ open, onClose, project, onSuccess }: ReleaseFund
                 />
                 {totalReleaseAmount && parseFloat(totalReleaseAmount) > getAvailableToRelease() && (
                   <p className="text-xs text-red-600 mt-2 font-medium">
-                    ⚠ Exceeds available balance of ₹{getAvailableToRelease().toLocaleString("en-IN")}
+                    âš  Exceeds available balance of ₹{getAvailableToRelease().toLocaleString("en-IN")}
                   </p>
                 )}
                 {totalReleaseAmount && parseFloat(totalReleaseAmount) > 0 && 
