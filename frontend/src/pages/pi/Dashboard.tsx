@@ -1,9 +1,10 @@
-// pages/pi/PIDashboard.tsx — WITH REJECTED REQUESTS + FILE NUMBER + VIEW FILE
+// pages/pi/PIDashboard.tsx
 
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
+
 import {
   Loader2, PlusCircle, ChevronDown, ChevronUp,
   CheckCircle2, XCircle, Clock, BookOpen, Wallet,
@@ -34,7 +35,7 @@ interface Project {
   filledExpenditureCount: number; availableBalance: number; status: string;
 }
 
-const API = import.meta.env.VITE_API_URL;
+const API=import.meta.env.VITE_API_URL;
 const PI_EMAIL="pi@ifms.edu";
 const PI_NAME="Dr. Suresh Patel";
 const PI_DEPT="Research & Development";
@@ -48,7 +49,7 @@ const stageConfig:Record<string,{label:string;dot:string;bg:string;text:string;b
   ar:{label:"Pending at AR",dot:"bg-indigo-500",bg:"bg-indigo-50",text:"text-indigo-700",border:"border-indigo-200"},
   dr:{label:"Pending at DR",dot:"bg-violet-500",bg:"bg-violet-50",text:"text-violet-700",border:"border-violet-200"},
   drc_office:{label:"Pending at DRC Office",dot:"bg-blue-500",bg:"bg-blue-50",text:"text-blue-700",border:"border-blue-200"},
-  drc_rc:{label:"Pending at DRC (R&C)",dot:"bg-purple-500",bg:"bg-purple-50",text:"text-purple-700",border:"border-purple-200"},
+  drc_rc:{label:"Pending at DR (R&C)",dot:"bg-purple-500",bg:"bg-purple-50",text:"text-purple-700",border:"border-purple-200"},
   drc:{label:"Pending at DRC",dot:"bg-fuchsia-500",bg:"bg-fuchsia-50",text:"text-fuchsia-700",border:"border-fuchsia-200"},
   director:{label:"Pending at Director",dot:"bg-rose-500",bg:"bg-rose-50",text:"text-rose-700",border:"border-rose-200"},
 };
@@ -99,7 +100,11 @@ const PIDashboard=()=>{
     window.open(`${API}/download-file.php?requestId=${req.id}&type=quotation`,"_blank");
   };
 
-  const filtered=projects.filter(p=>{const q=projectSearch.trim().toLowerCase();return !q||p.gpNumber?.toLowerCase().includes(q)||p.projectName?.toLowerCase().includes(q)||p.department?.toLowerCase().includes(q);});
+  const filtered = projects.filter(p => {
+    const q = projectSearch.trim().toLowerCase();
+    return !q || p.gpNumber?.toLowerCase().includes(q) || p.projectName?.toLowerCase().includes(q);
+  });
+
   const totalReleased=projects.reduce((s,p)=>s+(p.totalReleasedAmount||0),0);
   const totalBooked=projects.reduce((s,p)=>s+(p.amountBookedByPI||0),0);
   const totalAvailable=projects.reduce((s,p)=>s+(p.availableBalance||0),0);
@@ -169,16 +174,28 @@ const PIDashboard=()=>{
           ].map(s=>(<div key={s.label} className={`bg-white border ${s.bg} rounded-xl p-4 shadow-sm flex items-center gap-4`}><div className={`p-2.5 rounded-lg ${s.bg} border`}>{s.icon}</div><div><p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">{s.label}</p><p className={`text-2xl font-bold ${s.vcolor} leading-none mt-0.5`}>{s.value}</p><p className="text-[11px] text-gray-400 mt-0.5">{s.desc}</p></div></div>))}
         </div>
 
-        {/* Section heading */}
+        {/* Section heading + single search */}
         <div className="flex items-center justify-between gap-4 pt-1">
           <div className="flex items-center gap-3">
             <div className="w-1 h-6 rounded-full" style={{background:"linear-gradient(180deg, #c9a227, #e8c547)"}}/>
             <h2 className="text-base font-bold text-gray-900 tracking-tight">Research Projects & Fund Utilisation</h2>
             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded font-medium">{filtered.length} projects</span>
           </div>
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none"/>
-            <Input placeholder="Search by GP No. or project name…" value={projectSearch} onChange={e=>setProjectSearch(e.target.value)} className="pl-9 h-9 text-sm bg-white border-gray-200 rounded-lg shadow-sm"/>
+          <div className="flex items-center gap-2">
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none"/>
+              <Input
+                placeholder="Search by project name or GP number…"
+                value={projectSearch}
+                onChange={e=>setProjectSearch(e.target.value)}
+                className="pl-9 h-9 text-[11px] bg-white border-gray-200 rounded-lg shadow-sm focus-visible:ring-blue-400"
+              />
+            </div>
+            {projectSearch&&(
+              <Button variant="ghost" size="sm" onClick={()=>setProjectSearch("")} className="h-9 text-[11px] text-gray-500 hover:text-red-600">
+                Clear
+              </Button>
+            )}
           </div>
         </div>
 
@@ -298,7 +315,7 @@ const PIDashboard=()=>{
                     </div>
                   )}
 
-                  {/* ── REJECTED REQUESTS SECTION ── */}
+                  {/* REJECTED REQUESTS SECTION */}
                   {rejectedList.length>0&&(
                     <>
                       <button onClick={()=>toggleRej(p.id)} className="w-full flex items-center justify-between px-6 py-3 border-t border-red-100 bg-red-50/40 hover:bg-red-50 transition-colors">
@@ -308,17 +325,15 @@ const PIDashboard=()=>{
 
                       {rejOpen&&(
                         <div className="border-t border-red-100">
-                          {/* Rejected table header */}
                           <div className="grid grid-cols-[1.5fr_2fr_1.2fr_1fr_1.5fr_2fr_110px] text-[10px] font-bold uppercase tracking-widest text-red-400 bg-red-50/60 border-b border-red-100 px-6 py-2.5 gap-0">
                             <span>Head / File No.</span><span>Purpose</span><span>Rejected On</span><span className="text-right">Amount (₹)</span><span>Rejected By</span><span>Reason for Rejection</span><span className="text-center">Quotation</span>
                           </div>
                           {rejectedList.map((req,i)=>{
                             const amount=parseFloat(String(req.amount||0));
                             const isLast=i===rejectedList.length-1;
-                            const reason=req.rejectionRemarks||req.daRemarks||req.arRemarks||req.drRemarks||req.drcOfficeRemarks||req.drcRcRemarks||req.drcRemarks||req.directorRemarks||"—";
+                            const reason=req.rejectionRemarks||"—";
                             return(
                               <div key={req.id} className={`grid grid-cols-[1.5fr_2fr_1.2fr_1fr_1.5fr_2fr_110px] px-6 py-4 items-start gap-0 ${!isLast?"border-b border-red-100":""} bg-red-50/10 hover:bg-red-50/30 transition-colors`}>
-                                {/* Head + file number */}
                                 <div>
                                   <p className="text-sm font-semibold text-gray-700 leading-snug">{req.headName||"—"}</p>
                                   {req.fileNumber
@@ -326,30 +341,20 @@ const PIDashboard=()=>{
                                     :<p className="text-[11px] text-gray-400 italic mt-0.5">No file number</p>}
                                   {req.invoiceNumber&&<p className="text-[11px] font-mono text-gray-400 mt-0.5">{req.invoiceNumber}</p>}
                                 </div>
-
                                 <p className="text-xs text-gray-600 leading-relaxed line-clamp-3 pt-0.5">{req.purpose||"—"}</p>
-
-                                {/* Dates */}
                                 <div>
                                   <p className="text-[11px] text-gray-400">Submitted:</p>
                                   <p className="text-xs text-gray-600 font-medium">{fmtDate(req.createdAt)}</p>
                                   {req.rejectedAt&&<><p className="text-[11px] text-red-400 mt-1">Rejected:</p><p className="text-xs text-red-600 font-medium">{fmtDate(req.rejectedAt)}</p></>}
                                 </div>
-
                                 <p className="text-sm font-bold text-gray-700 font-mono text-right pt-0.5">{fmtINR(amount)}</p>
-
-                                {/* Rejected by */}
                                 <div>
                                   <p className="text-xs font-bold text-red-700 leading-snug">{req.rejectedAtStageLabel||req.rejectedAtStage||"—"}</p>
                                   {req.rejectedBy&&<p className="text-[11px] text-gray-500 mt-0.5">{req.rejectedBy}</p>}
                                 </div>
-
-                                {/* Reason */}
                                 <div className="pr-2">
                                   <p className="text-xs text-gray-700 italic leading-relaxed line-clamp-4">{reason}</p>
                                 </div>
-
-                                {/* View quotation file */}
                                 <div className="flex justify-center pt-0.5">
                                   <button onClick={()=>viewFile(req)}
                                     className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-1.5 rounded transition-colors whitespace-nowrap"

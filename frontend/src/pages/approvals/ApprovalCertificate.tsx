@@ -24,6 +24,7 @@ interface CertificateData {
   purpose: string; description: string;
   invoiceNumber: string;
   daRemarks: string; arRemarks: string; drRemarks: string;
+  approvalType?: string;
 }
 
 const fmtINR = (n: number) =>
@@ -83,7 +84,7 @@ const ApprovalCertificate = () => {
         <div className="flex items-center gap-2">
           <p className="text-sm text-gray-500 mr-2">
             <span className="font-semibold text-gray-800">Approval Certificate</span>
-            {data.fileNumber && <> &nbsp;·&nbsp; File: <span className="font-mono font-bold text-blue-700">{data.fileNumber}</span></>}
+            {data.fileNumber && <> &nbsp;Â·&nbsp; File: <span className="font-mono font-bold text-blue-700">{data.fileNumber}</span></>}
           </p>
           <Button size="sm" onClick={handlePrint} className="bg-blue-700 hover:bg-blue-800 h-8 gap-1.5">
             <Printer className="h-3.5 w-3.5" /> Print / Save PDF
@@ -108,10 +109,10 @@ const ApprovalCertificate = () => {
           className="print-page bg-white mx-auto shadow-lg"
           style={{ width: "210mm", minHeight: "297mm", padding: "14mm 14mm 10mm 14mm", fontFamily: "Times New Roman, serif", fontSize: "12pt" }}
         >
-          {/* ── Header ── */}
+          {/* â”€â”€ Header â”€â”€ */}
           <div className="flex justify-between items-start mb-4">
             <div>
-              <p className="text-[11pt]">Sub: Admn cum Financial Approval</p>
+              <p className="text-[11pt]">Sub: {data.approvalType === 'admin' ? 'Administrative Approval' : 'Admn cum Financial Approval'}</p>
             </div>
             <div className="text-right">
               <p className="text-[11pt] font-bold">Under MEITY Project</p>
@@ -124,7 +125,7 @@ const ApprovalCertificate = () => {
             {data.approvedDate && <p>Date: <span className="font-semibold">{data.approvedDate}</span></p>}
           </div>
 
-          {/* ── Main table ── */}
+          {/* â”€â”€ Main table â”€â”€ */}
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11pt" }}>
             <tbody>
 
@@ -189,7 +190,7 @@ const ApprovalCertificate = () => {
             </tbody>
           </table>
 
-          {/* ── Detail of Expenditure section ── */}
+          {/* â”€â”€ Detail of Expenditure section â”€â”€ */}
           <div style={{ marginTop: "18px" }}>
             <p style={{ fontSize: "11pt", marginBottom: "6px" }}>
               <strong>Detail of Expenditure:</strong>{" "}
@@ -237,7 +238,7 @@ const ApprovalCertificate = () => {
             </table>
           </div>
 
-          {/* ── Signature section ── */}
+          {/* â”€â”€ Signature section â”€â”€ */}
           <div style={{ marginTop: "32px", display: "flex", justifyContent: "space-between", fontSize: "11pt" }}>
             <div style={{ textAlign: "center" }}>
               <div style={{ borderTop: "1px solid black", width: "160px", marginTop: "40px", paddingTop: "4px" }}>
@@ -271,7 +272,7 @@ const ApprovalCertificate = () => {
   );
 };
 
-// ── Styles ────────────────────────────────────────────────────────────────────
+// â”€â”€ Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const borderStyle = "1px solid black";
 
 const tdNumStyle: React.CSSProperties = {
@@ -298,7 +299,7 @@ const tdCenterStyle: React.CSSProperties = {
   textAlign: "center", verticalAlign: "middle",
 };
 
-// ── Table row helper ──────────────────────────────────────────────────────────
+// â”€â”€ Table row helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const TableRow = ({
   num, label, value,
 }: {

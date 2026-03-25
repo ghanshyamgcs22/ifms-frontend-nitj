@@ -1,4 +1,4 @@
-// ExpenditureDialog.tsx  v3
+﻿// ExpenditureDialog.tsx  v3
 // Shows expenditure register grouped by fund release installment.
 // Each release = collapsible section → heads → per-request rows with actual/variance.
 // Grand total booked never exceeds totalReleasedAmount.
@@ -11,7 +11,6 @@ import { CheckCircle2, AlertCircle, Loader2, ChevronDown, ChevronRight, Banknote
 
 const API = import.meta.env.VITE_API_URL;
 
-// ── Types ──────────────────────────────────────────────────────────────────────
 interface RequestRow {
   requestId: string;
   requestNumber: string;
@@ -74,8 +73,6 @@ const fmtINR = (n: number) =>
 
 const fmtDate = (d: string | null) =>
   d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
-
-// ── Component ─────────────────────────────────────────────────────────────────
 export const ExpenditureDialog = ({ project }: Props) => {
   const [open,             setOpen]             = useState(false);
   const [loading,          setLoading]          = useState(false);
@@ -144,7 +141,7 @@ export const ExpenditureDialog = ({ project }: Props) => {
             <div className="flex items-start justify-between gap-6">
               <div className="flex-1 min-w-0">
                 <p className="text-[9px] font-mono font-semibold text-slate-400 tracking-[0.2em] uppercase mb-1.5">
-                  {project.gpNumber} · Expenditure Register
+                  {project.gpNumber} Â· Expenditure Register
                 </p>
                 <DialogTitle className="text-lg font-bold text-slate-900 leading-snug">
                   {project.projectName}
@@ -194,7 +191,7 @@ export const ExpenditureDialog = ({ project }: Props) => {
               { label: "Released",    value: released,   note: `${sanctioned > 0 ? ((released/sanctioned)*100).toFixed(0) : 0}% of sanctioned`, hi: false },
               { label: "Booked",      value: booked,     note: "Approved requests",    hi: false },
               { label: "Actual Exp.", value: actual,     note: actual > 0 ? `${booked > 0 ? ((actual/booked)*100).toFixed(0) : 0}% of booked` : "Pending DA", hi: false },
-              { label: "Remaining",   value: remaining,  note: "Released − Booked",    hi: true  },
+              { label: "Remaining",   value: remaining,  note: "Released âˆ’ Booked",    hi: true  },
             ].map(c => (
               <div key={c.label} className={`px-4 py-3 ${c.hi ? "bg-blue-50" : "bg-white"}`}>
                 <p className="text-[9px] uppercase tracking-wider font-semibold text-slate-400 mb-0.5">{c.label}</p>
@@ -207,13 +204,13 @@ export const ExpenditureDialog = ({ project }: Props) => {
           {/* Body */}
           <div className="px-8 py-6 space-y-4">
             <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-slate-400">
-              Release-wise · Expenditure Ledger
+              Release-wise Â· Expenditure Ledger
             </p>
 
             {loading ? (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="h-5 w-5 animate-spin text-slate-300 mr-3" />
-                <span className="text-sm text-slate-400">Loading expenditure data…</span>
+                <span className="text-sm text-slate-400">Loading expenditure data—¦</span>
               </div>
             ) : releases.length === 0 ? (
               <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl">
@@ -246,8 +243,8 @@ export const ExpenditureDialog = ({ project }: Props) => {
                         </p>
                         <p className="text-[9px] text-slate-400 mt-0.5 uppercase tracking-wider">
                           {rel.letterDate ? `Letter Date: ${fmtDate(rel.letterDate)}` : ""}
-                          {rel.letterNumber ? ` · Ref: ${rel.letterNumber}` : ""}
-                          {" · "}{rel.filledCount}/{rel.approvedCount} expenditures filled
+                          {rel.letterNumber ? ` Â· Ref: ${rel.letterNumber}` : ""}
+                          {" Â· "}{rel.filledCount}/{rel.approvedCount} expenditures filled
                         </p>
                       </div>
                       <div className="flex items-center gap-7 shrink-0">
@@ -306,7 +303,7 @@ export const ExpenditureDialog = ({ project }: Props) => {
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-semibold text-slate-800">{head.headName}</p>
                                   <p className="text-[9px] text-slate-400 uppercase tracking-wider">
-                                    {head.headType} · {head.filledCount}/{head.approvedCount} filled
+                                    {head.headType} Â· {head.filledCount}/{head.approvedCount} filled
                                   </p>
                                 </div>
                                 <div className="flex items-center gap-6 shrink-0">
@@ -406,7 +403,7 @@ export const ExpenditureDialog = ({ project }: Props) => {
                                     <tfoot>
                                       <tr className="border-t-2 border-slate-200 bg-slate-50">
                                         <td colSpan={5} className="px-3 py-2 text-[9px] font-bold uppercase tracking-widest text-slate-500">
-                                          Subtotal · {head.headName}
+                                          Subtotal Â· {head.headName}
                                         </td>
                                         <td className="px-3 py-2 text-xs font-black font-mono text-slate-700 text-right">
                                           {fmtINR(head.requests.reduce((s, r) => s + r.bookedAmount, 0))}

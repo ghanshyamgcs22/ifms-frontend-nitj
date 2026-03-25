@@ -1,4 +1,4 @@
-import { Layout } from "@/components/Layout";
+﻿import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,7 +110,7 @@ const Departments = () => {
             <AlertDescription>
               <strong>Error:</strong> {error}
               <br />
-              <span className="text-sm">Make sure backend is running on ${import.meta.env.VITE_API_URL.replace("/api", "")}</span>
+              <span className="text-sm">Make sure backend is running on ${import.meta.env.VITE_API_URL}</span>
             </AlertDescription>
           </Alert>
         )}

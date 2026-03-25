@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,7 +74,7 @@ const ModernManageProjects = () => {
           window.URL.revokeObjectURL(url); document.body.removeChild(a);
         } else { alert("Sanction letter not found"); }
       } else if (project.sanctionedLetterFile) {
-        const response = await fetch(`${import.meta.env.VITE_API_URL.replace("/api", "")}${project.sanctionedLetterFile}`);
+        const response = await fetch(`{import.meta.env.VITE_API_URL}${project.sanctionedLetterFile}`);
         if (!response.ok) throw new Error("Failed to download file");
         const blob = await response.blob();
         const url  = window.URL.createObjectURL(blob);
@@ -104,7 +104,7 @@ const ModernManageProjects = () => {
     finally { setProcessingAction(null); }
   };
 
-  // Remaining = Released − Booked + (Booked − Actual)
+  // Remaining = Released âˆ’ Booked + (Booked âˆ’ Actual)
   const calcRemaining = (project) => {
     const released = parseFloat(project.totalReleasedAmount || 0);
     const booked   = parseFloat(project.amountBookedByPI    || 0);
@@ -334,17 +334,17 @@ const ModernManageProjects = () => {
                               {parseFloat(project.totalReleasedAmount || 0).toLocaleString("en-IN")}
                             </TableCell>
 
-                            {/* ── Booked by PI — clickable dialog ── */}
+                            {/* â”€â”€ Booked by PI — clickable dialog â”€â”€ */}
                             <TableCell className="py-3.5 px-4 text-right">
                               <BookedAmountDialog project={bookedDialogProject} />
                             </TableCell>
 
-                            {/* ── Actual Exp. — clickable dialog ── */}
+                            {/* â”€â”€ Actual Exp. — clickable dialog â”€â”€ */}
                             <TableCell className="py-3.5 px-4 text-right">
                               <ExpenditureDialog project={expenditureDialogProject} />
                             </TableCell>
 
-                            {/* Remaining = Released − Booked + (Booked − Actual) */}
+                            {/* Remaining = Released âˆ’ Booked + (Booked âˆ’ Actual) */}
                             <TableCell className="py-3.5 px-4 text-sm font-semibold text-right">
                               <span className={
                                 remaining <= 0   ? "text-gray-400" :
@@ -354,7 +354,7 @@ const ModernManageProjects = () => {
                               </span>
                             </TableCell>
 
-                            {/* Yet to Release = Sanctioned − Released */}
+                            {/* Yet to Release = Sanctioned âˆ’ Released */}
                             <TableCell className="py-3.5 px-4 text-sm text-amber-700 font-semibold text-right">
                               {yetToRelease.toLocaleString("en-IN")}
                             </TableCell>
@@ -396,7 +396,7 @@ const ModernManageProjects = () => {
                                   onClick={() => handleViewReport(project)}
                                   className="h-7 px-2.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white border-0"
                                 >
-                                  Report ↗
+                                  Report →—
                                 </Button>
 
                                 {/* Heads */}

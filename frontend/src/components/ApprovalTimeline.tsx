@@ -1,7 +1,7 @@
 // components/ApprovalTimeline.tsx
 // Dynamic timeline — works for BOTH chains:
 //   ≤ ₹25,000  → PI → DA → AR → DR
-//   > ₹25,000  → PI → DA → AR → DR → DRC Office → DRC (R&C) → DRC → Director
+//   > ₹25,000  → PI → DA → AR → DR → DRC Office → DR (R&C) → DRC → Director
 
 import {
   CheckCircle2, Clock, Circle,
@@ -75,7 +75,7 @@ const STAGE_DEFS: Record<string, {
     activePing:  "bg-cyan-500",     activeRing: "ring-cyan-100",
   },
   drc_rc: {
-    label: "DRC (R&C)", sublabel: "Research & Committee review",
+    label: "DR (R&C)", sublabel: "Research & Committee review",
     Icon: FlaskConical,
     activeColor: "text-teal-600",   activeBg: "bg-teal-50 border-teal-300",
     activePing:  "bg-teal-500",     activeRing: "ring-teal-100",

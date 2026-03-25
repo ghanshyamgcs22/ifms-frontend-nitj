@@ -30,7 +30,7 @@ const DEMO_USERS = [
   { role: "AR",           email: "ar@ifms.edu" },
   { role: "DR",           email: "dr@ifms.edu" },
   { role: "DRC Office",   email: "drc.office@ifms.edu" },
-  { role: "DRC (R&C)",    email: "drc.rc@ifms.edu" },
+  { role: "DR (R&C)",     email: "drc.rc@ifms.edu" },
   { role: "DRC",          email: "drc@ifms.edu" },
   { role: "Director",     email: "director@ifms.edu" },
 ];
@@ -176,7 +176,7 @@ const Login = () => {
                     </p>
                     <p>
                       <span className="text-violet-600 font-medium">&gt; ₹25k:</span>{" "}
-                      DA → AR → DR → DRC Office → DRC (R&C) → DRC → Director
+                      DA → AR → DR → DRC Office → DR (R&C) → DRC → Director
                     </p>
                   </div>
                 </div>

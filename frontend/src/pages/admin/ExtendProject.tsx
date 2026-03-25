@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -185,7 +185,7 @@ const ExtendProject = ({ open, onClose, project, onSuccess }: ExtendProjectProps
                 {selectedFile && (
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Extension PDF:</span>
-                    <span className="text-sm font-semibold text-gray-900">Uploaded ✓</span>
+                    <span className="text-sm font-semibold text-gray-900">Uploaded âœ“</span>
                   </div>
                 )}
               </div>
@@ -289,7 +289,7 @@ const ExtendProject = ({ open, onClose, project, onSuccess }: ExtendProjectProps
                 </div>
               )}
 
-              {/* ── PDF Upload ── */}
+              {/* â”€â”€ PDF Upload â”€â”€ */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">
                   Extension Letter / Supporting PDF
@@ -333,7 +333,7 @@ const ExtendProject = ({ open, onClose, project, onSuccess }: ExtendProjectProps
                       <p className="text-sm font-medium text-gray-700">
                         Drag & drop a PDF, or <span className="text-blue-600 underline">browse</span>
                       </p>
-                      <p className="text-xs text-gray-500 mt-0.5">PDF only · Max 10 MB</p>
+                      <p className="text-xs text-gray-500 mt-0.5">PDF only Â· Max 10 MB</p>
                     </div>
                   </div>
                 )}
