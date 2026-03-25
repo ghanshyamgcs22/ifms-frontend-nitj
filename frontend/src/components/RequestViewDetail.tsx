@@ -430,6 +430,19 @@ export const RequestFullDetail = ({ request, viewerStage, onFieldSaved }: Reques
   // ── Active query banner data (unresolved, for banner at top) ───────────────
   const activeQuery = allQueries.find(q => !q.resolved) ?? null;
 
+  const colorMap = {
+    emerald: { bg: "bg-emerald-500/10", border: "border-emerald-500/20", text: "text-emerald-400", textDim: "text-emerald-400/80", textBr: "text-emerald-400/90" },
+    red: { bg: "bg-red-500/10", border: "border-red-500/20", text: "text-red-400", textDim: "text-red-400/80", textBr: "text-red-400/90" },
+    orange: { bg: "bg-orange-500/10", border: "border-orange-500/20", text: "text-orange-400", textDim: "text-orange-400/80", textBr: "text-orange-400/90" },
+    amber: { bg: "bg-amber-500/10", border: "border-amber-500/20", text: "text-amber-400", textDim: "text-amber-400/80", textBr: "text-amber-400/90" },
+    blue: { bg: "bg-blue-500/10", border: "border-blue-500/20", text: "text-blue-400", textDim: "text-blue-400/80", textBr: "text-blue-400/90" }
+  };
+
+  const scheme = request.status === "approved" ? colorMap.emerald
+    : request.status === "rejected" ? colorMap.red
+    : request.status?.includes("sent_back") || request.status?.includes("sendback") ? colorMap.orange
+    : colorMap.amber;
+
   return (
     <div className="space-y-4 font-sans">
 
@@ -459,19 +472,18 @@ export const RequestFullDetail = ({ request, viewerStage, onFieldSaved }: Reques
               {request.status === "approved" ? "✓ Approved"
                 : request.status === "rejected" ? "✕ Rejected"
                 : request.status?.includes("sent_back") ? "↩ Sent Back"
+                : activeQuery ? "● Query Raised"
                 : "● In Progress"}
             </span>
           </div>
         </div>
 
-        {/* File / GP / Type row */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-px bg-white/5">
+        {/* File / GP / Project Type row — Budget Head & Head Type moved to Allocation card below */}
+        <div className="grid grid-cols-3 gap-px bg-white/5">
           {[
-            ["File No.",      request.fileNumber],
-            ["GP Number",     request.gpNumber],
-            ["Budget Head",   request.headName],
-            ["Head Type",     request.headType],
-            ["Project Type",  request.projectType],
+            ["File No.",     request.fileNumber],
+            ["GP Number",    request.gpNumber],
+            ["Project Type", request.projectType],
           ].map(([l, v]) => (
             <div key={l} className="bg-slate-900 px-4 py-3">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{l}</p>
@@ -509,33 +521,43 @@ export const RequestFullDetail = ({ request, viewerStage, onFieldSaved }: Reques
         </div>
       </div>
 
-      {/* ══ 2. BUDGET ALLOCATION HIGHLIGHT (Dark Refined Tab) ══════════════ */}
-      <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl p-5 shadow-lg border border-slate-800 flex items-stretch divide-x divide-slate-800 mt-2">
-        <div className="flex items-center gap-4 pr-6 flex-1">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-            <RotateCcw className="h-5 w-5 text-blue-400" />
+      {/* ══ 2. ALLOCATION HEAD DETAIL CARD (matches Budget Request header) ══ */}
+      <div className="rounded-2xl overflow-hidden shadow-lg border border-white/10 mt-2 bg-slate-900">
+        {/* Card header row */}
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-white/10">
+          <div className={`w-8 h-8 rounded-lg ${scheme.bg} flex items-center justify-center border ${scheme.border} shrink-0`}>
+            <RotateCcw className={`h-4 w-4 ${scheme.text}`} />
           </div>
-          <div className="space-y-0.5">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400/80">Allocation Head</p>
-            <p className="text-white font-bold text-lg leading-tight tracking-tight">{request.headName || "—"}</p>
+          <div className="flex-1 min-w-0">
+            <p className={`text-[10px] font-black uppercase tracking-[0.18em] ${scheme.textDim}`}>Allocation Head</p>
+            <p className="text-white font-bold text-base leading-tight truncate">{request.headName || "—"}</p>
           </div>
-        </div>
-
-        <div className="px-6 flex flex-col justify-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">Expenditure Type</p>
-          <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[9px] font-black uppercase tracking-widest border border-blue-500/20 w-fit">
+          {/* Head Type badge */}
+          <span className={`shrink-0 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${scheme.bg} ${scheme.text} ${scheme.border}`}>
             {request.headType || "—"}
           </span>
         </div>
 
-        <div className="px-6 flex flex-col justify-center min-w-[160px]">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-0.5">Head Booked</p>
-          <p className="text-white font-black text-xl font-mono drop-shadow-sm">{fmtAmount(request.headBookedAmount)}</p>
-        </div>
+        {/* Amounts grid */}
+        <div className="grid grid-cols-3 divide-x divide-white/10">
+          {/* Requested Amount — most prominent */}
+          <div className="px-5 py-4 col-span-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-300/70 mb-1">Requested Amount</p>
+            <p className={`font-black text-2xl font-mono leading-none ${scheme.text}`}>{fmtAmount(request.amount)}</p>
+            <p className="text-[10px] text-blue-200/50 mt-1 font-medium">For this request</p>
+          </div>
 
-        <div className="pl-6 flex flex-col justify-center min-w-[160px] text-right ml-auto">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-0.5 text-right">Sanction Limit</p>
-          <p className="text-blue-400/90 font-black text-xl font-mono">{fmtAmount(request.headSanctionedAmount)}</p>
+          <div className="px-5 py-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 mb-1">Head Booked</p>
+            <p className="text-white font-black text-xl font-mono leading-none">{fmtAmount(request.headBookedAmount)}</p>
+            <p className="text-[10px] text-slate-500 mt-1">Total booked under head</p>
+          </div>
+
+          <div className="px-5 py-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 mb-1">Sanction Limit</p>
+            <p className={`${scheme.textBr} font-black text-xl font-mono leading-none`}>{fmtAmount(request.headSanctionedAmount)}</p>
+            <p className="text-[10px] text-slate-500 mt-1">Max allowed for head</p>
+          </div>
         </div>
       </div>
 
