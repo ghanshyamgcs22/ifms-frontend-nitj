@@ -34,6 +34,8 @@ interface BudgetRequest {
   mode?: string;
   amount: number;
   totalSanctionedAmount?: number;
+  headSanctionedAmount?: number;
+  headBookedAmount?: number;
   projectType: string;
   invoiceNumber: string;
   headName?: string;
@@ -97,6 +99,8 @@ const toDetailData = (r: BudgetRequest): RequestDetailData => ({
   headName:         r.headName,
   headType:         r.headType,
   projectType:      r.projectType,
+  amount:           r.amount,
+  totalSanctionedAmount: r.totalSanctionedAmount,
   headSanctionedAmount: r.headSanctionedAmount,
   headBookedAmount:     r.headBookedAmount,
   invoiceNumber:    r.invoiceNumber,
