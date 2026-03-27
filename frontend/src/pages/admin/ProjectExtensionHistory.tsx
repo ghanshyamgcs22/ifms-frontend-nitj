@@ -20,7 +20,7 @@ const ProjectExtensionHistory = ({ projectId, gpNumber }: ExtensionHistoryProps)
     try {
       setLoading(true);
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/extend-project.php?projectId=${projectId}`
+        `${import.meta.env.VITE_API_URL}/extend-project.php?projectId=${projectId}`
       );
       const data = await response.json();
 

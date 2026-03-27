@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ProjectReportWindow.jsx  v2
  * Full institutional project report with:
  *  - Correct fund release history (from fund_releases collection)
@@ -636,7 +636,7 @@ export const openProjectReport = async (project) => {
   win.document.close();
 
   try {
-    const res  = await fetch(`{import.meta.env.VITE_API_URL}/api/get-project-report.php?projectId=${project.id}`);
+    const res  = await fetch(`${import.meta.env.VITE_API_URL}/get-project-report.php?projectId=${project.id}`);
     const json = await res.json();
     if (!json.success) throw new Error(json.message || "Server error");
     const html = buildReportHTML(json.data);

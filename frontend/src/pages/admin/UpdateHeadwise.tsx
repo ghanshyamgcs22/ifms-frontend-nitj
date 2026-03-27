@@ -76,7 +76,7 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
       setLoading(true);
       
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/fund-allocations.php?projectId=${project.id}`
+        `${import.meta.env.VITE_API_URL}/fund-allocations.php?projectId=${project.id}`
       );
       const data = await response.json();
 
@@ -100,7 +100,7 @@ const UpdateHeadwise = ({ open, onClose, project, onSuccess }: UpdateHeadwisePro
       } else {
         // Fallback to project.heads
         const projectResponse = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/projects.php?id=${project.id}`
+          `${import.meta.env.VITE_API_URL}/projects.php?id=${project.id}`
         );
         const projectData = await projectResponse.json();
         

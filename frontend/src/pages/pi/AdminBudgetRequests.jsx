@@ -1,10 +1,11 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+
 import {
   Dialog,
   DialogContent,
@@ -20,9 +21,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { 
-  CheckCircle, 
-  XCircle, 
+import {
+  CheckCircle,
+  XCircle,
   Eye,
   Filter,
   Search,
@@ -50,14 +51,14 @@ const AdminBudgetRequests = () => {
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      let url = ${import.meta.env.VITE_API_URL}/get-budget-requests.php";
+      let url = `${import.meta.env.VITE_API_URL}/get-budget-requests.php`;
       if (statusFilter !== "all") {
         url += `?status=${statusFilter}`;
       }
-      
+
       const response = await fetch(url);
       const data = await response.json();
-      
+
       if (data.success) {
         setRequests(data.data || []);
       }
@@ -93,7 +94,7 @@ const AdminBudgetRequests = () => {
       setProcessing(true);
 
       const response = await fetch(
-        ${import.meta.env.VITE_API_URL}/verify-budget-request.php",
+        `${import.meta.env.VITE_API_URL}/verify-budget-request.php`,
         {
           method: "POST",
           headers: {
@@ -117,7 +118,7 @@ const AdminBudgetRequests = () => {
       alert(result.message);
       setVerifyDialogOpen(false);
       fetchRequests();
-      
+
     } catch (error) {
       console.error("Error verifying request:", error);
       alert("Error: " + error.message);
@@ -132,9 +133,9 @@ const AdminBudgetRequests = () => {
       'approved': { color: 'bg-green-100 text-green-800 border-green-200', label: 'Approved' },
       'rejected': { color: 'bg-red-100 text-red-800 border-red-200', label: 'Rejected' }
     };
-    
+
     const statusConfig = config[status] || config['pending_admin_verification'];
-    
+
     return (
       <Badge className={`${statusConfig.color} border font-medium`}>
         {statusConfig.label}
@@ -376,7 +377,7 @@ const AdminBudgetRequests = () => {
                   <div>
                     <Label className="text-xs text-gray-600">Amount Requested</Label>
                     <p className="font-semibold text-green-600">
-                      ₹{parseFloat(selected Request.requestedAmount).toLocaleString("en-IN")}
+                      ₹{parseFloat(selectedRequest.requestedAmount).toLocaleString("en-IN")}
                     </p>
                   </div>
                   <div>
@@ -415,7 +416,7 @@ const AdminBudgetRequests = () => {
                 {verifyAction === 'approve' ? 'Approve' : 'Reject'} Request
               </DialogTitle>
               <DialogDescription>
-                {verifyAction === 'approve' 
+                {verifyAction === 'approve'
                   ? 'Approving will book this amount and deduct from available balance'
                   : 'Rejecting will cancel this request'}
               </DialogDescription>
@@ -456,8 +457,8 @@ const AdminBudgetRequests = () => {
                   <Button
                     onClick={handleVerify}
                     disabled={processing}
-                    className={verifyAction === 'approve' 
-                      ? 'flex-1 bg-green-600 hover:bg-green-700' 
+                    className={verifyAction === 'approve'
+                      ? 'flex-1 bg-green-600 hover:bg-green-700'
                       : 'flex-1 bg-red-600 hover:bg-red-700'}
                   >
                     {processing ? (

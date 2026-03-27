@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,7 +74,7 @@ const ModernManageProjects = () => {
           window.URL.revokeObjectURL(url); document.body.removeChild(a);
         } else { alert("Sanction letter not found"); }
       } else if (project.sanctionedLetterFile) {
-        const response = await fetch(`{import.meta.env.VITE_API_URL}${project.sanctionedLetterFile}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}${project.sanctionedLetterFile}`);
         if (!response.ok) throw new Error("Failed to download file");
         const blob = await response.blob();
         const url  = window.URL.createObjectURL(blob);

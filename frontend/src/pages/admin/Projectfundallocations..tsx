@@ -42,7 +42,7 @@ const ProjectFundAllocations = () => {
     try {
       setLoading(true);
       // Fetch project details
-      const projectResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/projects.php?id=${projectId}`);
+      const projectResponse = await fetch(`${import.meta.env.VITE_API_URL}/projects.php?id=${projectId}`);
       const projectData = await projectResponse.json();
       
       if (projectData.success) {
@@ -50,7 +50,7 @@ const ProjectFundAllocations = () => {
       }
 
       // Fetch allocations
-      const allocationsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/fund-allocations.php?projectId=${projectId}`);
+      const allocationsResponse = await fetch(`${import.meta.env.VITE_API_URL}/fund-allocations.php?projectId=${projectId}`);
       const allocationsData = await allocationsResponse.json();
       
       if (allocationsData.success) {
@@ -76,7 +76,7 @@ const ProjectFundAllocations = () => {
   const confirmDelete = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/fund-allocations.php?id=${deletingId}`,
+        `${import.meta.env.VITE_API_URL}/fund-allocations.php?id=${deletingId}`,
         {
           method: "DELETE",
         }
@@ -100,7 +100,7 @@ const ProjectFundAllocations = () => {
   const saveEdit = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/fund-allocations.php?id=${editingAllocation.id}`,
+        `${import.meta.env.VITE_API_URL}/fund-allocations.php?id=${editingAllocation.id}`,
         {
           method: "PUT",
           headers: {

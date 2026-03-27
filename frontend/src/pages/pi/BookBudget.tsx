@@ -166,7 +166,7 @@ const BookBudget = () => {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const res  = await fetch(`${import.meta.env.VITE_API_URL}/api/get-pi-projects.php?piEmail=${PI_EMAIL}`);
+      const res  = await fetch(`${import.meta.env.VITE_API_URL}/get-pi-projects.php?piEmail=${PI_EMAIL}`);
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
       setProjects(data.data || []);
@@ -175,7 +175,7 @@ const BookBudget = () => {
   };
   const generateFileNumber = async (gpNumber: string) => {
     try {
-      const res  = await fetch(`${import.meta.env.VITE_API_URL}/api/get-next-file-num.php?gpNumber=${encodeURIComponent(gpNumber)}`);
+      const res  = await fetch(`${import.meta.env.VITE_API_URL}/get-next-file-num.php?gpNumber=${encodeURIComponent(gpNumber)}`);
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
       setFileNumber(data.fileNumber);
